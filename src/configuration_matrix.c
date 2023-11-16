@@ -6,22 +6,23 @@
 
 
 //random choice of clusters
-void configurationMatrix(int clusters, int nrows, FILE *initialFile) {
+void configurationMatrix(int nclusters, int nrows) {
     
-    rewind(initialFile);
-
-    skipHeader(initialFile);
-
-    int *configurationMatrix = (int *)malloc(nrows * clusters * sizeof(int));
+    int **configurationMatrix = (int **)malloc(nrows * sizeof(int*));
+    
+    for (int i = 0; i < nrows; i++) {
+        configurationMatrix[i] = (int *)malloc(nclusters * sizeof(int));
+    }
 
     for (int i = 0; i < nrows; i++) {
-        int nonZeroCol = rand() % clusters;
+        int nonZeroCol = rand() % nclusters;
 
-        for (int j = 0; j < clusters; j++) {
-            MatrΩ[i * clusters + j] = 0;
+        for (int j = 0; j < nclusters; j++) {
+
+            
         }
 
-        MatrΩ[] = 1;
+      
     }
 
     // Print the matrix

@@ -2,12 +2,7 @@
 #define READ_MATRIX_H 
 
 #include <stdio.h>
-
-typedef struct CSR{
-    int *rows;
-    int *cols;
-    int nz;
-} CSR;
+#include "structs.h"
 
 void readHeader(int *nrows, int *ncols ,int *nz , FILE *initialFile);
 

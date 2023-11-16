@@ -2,17 +2,28 @@
 #include <stdlib.h>
 
 
-//struct that includes the pair of row and col we read from the file
+/**
+ * @brief struct that includes the pair of row and col we read from the file
+ */
 typedef struct ElementsOfGraph {
-    int col;
-    int row;
+    int col;  //column of the vertex of the graph
+    int row; //row of the vertex of the graph
 } ElementsOfGraph;
 
 
 
-//skip the comments of the mtx file and get the nrows , ncols ,nz
+/**
+ * @brief skip the comments of the mtx file and get the nrows , ncols ,nz
+ * 
+ * @param nrows  number of rows of the mtx file
+ * @param ncols  number of cols of the mtx file
+ * @param nz   number of non-zero elements of the mtx file
+ * @param initialFile  file pointer of the mtx file we want to read
+ */
 void readHeader(int *nrows, int *ncols ,int *nz , FILE *initialFile){
-    char cursor;
+    char cursor; //temporary variable to read the file
+
+    //skip the comments of the mtx file. The comments start with %
     do{
         fscanf(initialFile,"%c", &cursor);
         if(cursor == '%'){
@@ -26,16 +37,26 @@ void readHeader(int *nrows, int *ncols ,int *nz , FILE *initialFile){
         }
     }while(1);
 
+    //return the pointer to the previous character
     fseek(initialFile , -1 , SEEK_CUR);
 
+    //read the first line after the comments of the mtx file
     fscanf(initialFile, "%d %d %d", nrows, ncols, nz);
     
     // printf("%d %d %d\n", *nrows, *ncols, *nz);
 
 }
 
+
+/**
+ * @brief skip the comments of the mtx file
+ * 
+ * @param initialFile  file pointer of the mtx file we want to read
+ */
 void skipHeader(FILE *initialFile){
-    char cursor;
+    char cursor; //temporary variable to read the file
+
+    //skip the comments of the mtx file. The comments start with %
     do{
         fscanf(initialFile,"%c", &cursor);
         if(cursor == '%'){
@@ -49,29 +70,33 @@ void skipHeader(FILE *initialFile){
         }
     }while(1);
 
+    //return the pointer to the previous character
     fseek(initialFile , -1 , SEEK_CUR);
 
+    //read the first line after the comments of the mtx file and do nothing with it
     int t1 ,t2 ,t3;
     fscanf(initialFile, "%d %d %d", &t1, &t2, &t3);
 }
 
 
 /**
- * @brief counting the non-zero elements of the array A
+ * @brief counting the non-zero elements of the Lower and Upper matrices per row
  * 
- * @param initialFile 
- * @param elemPerRowDown 
- * @param elemPerRowUp 
- * @param nz 
+ * @param initialFile file pointer of the mtx file we want to read
+ * @param elemPerRowDown array that stores the non-zero elements of the Lower matrix per row
+ * @param elemPerRowUp array that stores the non-zero elements of the Upper matrix per row
+ * @param nz  the non-zero elements of the mtx file
  */
 void countElemPerRow(FILE *initialFile, int *elemPerRowDown, int *elemPerRowUp, int nz){
     
-    // rewind(initialFile);
+    //going back to the start of the file
     fseek(initialFile, 0, SEEK_SET);
         
+    //skip the comments of the mtx file.
     skipHeader(initialFile);
 
-    int row, col;
+
+    int row, col;//temporary variables to read the file
 
 
     //reading the pairs of rows and cols and rows++ and cols++
@@ -246,6 +271,8 @@ int main(){
     
     csrMatrix.cols = (int *)malloc(2 * nz * sizeof(int));
     csrMatrix.rows = (int *)malloc((nrows + 1) * sizeof(int));
+    csrMatrix.nrows= nrows;
+    csrMatrix.nz = nz;
 
     createCsrMatrix(&csrMatrix, fptr, nz, nrows);
     printCsrMatrix(csrMatrix, nrows);
