@@ -3,8 +3,14 @@
 
 #include <stdio.h>
 
+typedef struct CSR{
+    int *rows;
+    int *cols;
+    int nz;
+} CSR;
+
 void readHeader(int *nrows, int *ncols ,int *nz , FILE *initialFile);
 
-void createCsrMatrix(int *csrRows, int *csrCols, FILE  *initialFile, int nz, int nrows);
+void createCsrMatrix(CSR *csrMatrix, FILE  *initialFile, int nz, int nrows);
 
 #endif

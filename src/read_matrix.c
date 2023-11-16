@@ -1,6 +1,14 @@
 #include "read_matrix.h"
 #include <stdlib.h>
-#include "configuration_matrix.h"
+
+
+//struct that includes the pair of row and col we read from the file
+typedef struct ElementsOfGraph {
+    int col;
+    int row;
+} ElementsOfGraph;
+
+
 
 //skip the comments of the mtx file and get the nrows , ncols ,nz
 void readHeader(int *nrows, int *ncols ,int *nz , FILE *initialFile){
@@ -22,7 +30,7 @@ void readHeader(int *nrows, int *ncols ,int *nz , FILE *initialFile){
 
     fscanf(initialFile, "%d %d %d", nrows, ncols, nz);
     
-    printf("%d %d %d\n", *nrows, *ncols, *nz);
+    // printf("%d %d %d\n", *nrows, *ncols, *nz);
 
 }
 
@@ -47,45 +55,19 @@ void skipHeader(FILE *initialFile){
     fscanf(initialFile, "%d %d %d", &t1, &t2, &t3);
 }
 
-//swap rows and cols in the mtx file
-void reverseFile(FILE *initialFile){
-    rewind(initialFile);
-        
-    int nrows, ncols , nz;
 
-    readHeader(&nrows, &ncols, &nz, initialFile);
-
-    FILE *invertedFile;
-    invertedFile = fopen ("InvertedFile", "w");
-    
-    if (invertedFile == NULL){
-        printf("Error! opening file");
-        // Program exits if file pointer returns NULL.
-        exit(1);
-    }
-
-    // Write header of the inverted file
-    fprintf(invertedFile,"%%MatrixMarket matrix coordinate pattern symmetric\n");
-    fprintf(invertedFile, "%d %d %d\n", ncols, nrows, nz);
-
-    int row, col;
-
-    for(int i = 0; i < nz; i++){
-        
-        fscanf(initialFile, "%d %d ", &row, &col);
-        
-        fprintf(invertedFile, "%d %d\n", col, row);
-
-    }
-
-    fclose(invertedFile);
-}
-
-
-//counting the non-zero elements of the array A
+/**
+ * @brief counting the non-zero elements of the array A
+ * 
+ * @param initialFile 
+ * @param elemPerRowDown 
+ * @param elemPerRowUp 
+ * @param nz 
+ */
 void countElemPerRow(FILE *initialFile, int *elemPerRowDown, int *elemPerRowUp, int nz){
     
-    rewind(initialFile);
+    // rewind(initialFile);
+    fseek(initialFile, 0, SEEK_SET);
         
     skipHeader(initialFile);
 
@@ -105,6 +87,67 @@ void countElemPerRow(FILE *initialFile, int *elemPerRowDown, int *elemPerRowUp, 
     }
 }
 
+/**
+ * @brief Allocates memory for the half of graph with dimensions  
+ * nrows x elemPerRow[i]->elements from the elemPerRowDown matrix 
+ * 
+ * @param nrows 
+ * @param elements 
+ * @param elemPerRow 
+ * @return 
+ */
+ElementsOfGraph **allocateGraph(int nrows, int *elemPerRow) {
+    
+   
+    ElementsOfGraph **graph = (ElementsOfGraph **)malloc(sizeof(ElementsOfGraph *) * nrows);
+
+    //Allocates memory for each row of the graph
+    for (int i = 0; i < nrows; i++) {
+        graph[i] = (ElementsOfGraph *)malloc(sizeof(ElementsOfGraph) * elemPerRow[i]);
+    }
+
+    // return the pointer
+    return graph;
+}
+
+//stores the pair of row and col we read from the file to the struct we built
+void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGraph **UpperGraph, int nz, int nrows){
+    
+    // rewind(initialFile);
+    fseek(initialFile, 0, SEEK_SET);
+
+        
+    skipHeader(initialFile);
+
+    int read_row, read_col;
+
+    int *lowerColumnIndex = (int *)calloc(nrows, sizeof(int));
+    int *upperColumnIndex = (int *)calloc(nrows, sizeof(int));
+
+    for(int i = 0 ;i < nz; i++){
+        fscanf(initialFile, "%d %d ", &read_row, &read_col);
+
+        //convert to 0indexed
+        read_row--;
+        read_col--;
+
+
+        // first time run read_row = 1 and read_col = 0
+
+        LowerGraph[read_row][lowerColumnIndex[read_row]].row = read_row;
+        LowerGraph[read_row][lowerColumnIndex[read_row]].col = read_col;
+        lowerColumnIndex[read_row]++;
+
+        UpperGraph[read_col][upperColumnIndex[read_col]].row = read_col;
+        UpperGraph[read_col][upperColumnIndex[read_col]].col = read_row;
+        upperColumnIndex[read_col]++;
+
+    }
+    free(lowerColumnIndex);
+    free(upperColumnIndex);
+}
+
+
 
 /**
  * @brief Create a Csr Matrix matrix from a file
@@ -114,148 +157,82 @@ void countElemPerRow(FILE *initialFile, int *elemPerRowDown, int *elemPerRowUp, 
  * @param fptr file pointer
  * @param nz number of nz elements
  */
-void createCsrMatrix(int *csrRows, int *csrCols, FILE  *initialFile, int nz, int nrows){   
-    
-    // FILE *invertedFile;
-    // invertedFile = fopen ("InvertedFile", "r");
-    
-    // if (invertedFile == NULL){
-    //     printf("Error! opening file");
-    //     // Program exits if file pointer returns NULL.
-    //     return 1;
-    // }
-
-    // int nrows, ncols;
-    // readHeader(&nrows, &ncols, &nz, invertedFile);
-   
+ void createCsrMatrix(CSR *csrMatrix, FILE  *initialFile, int nz, int nrows){      
    
     int *elemPerRowDown = (int *)calloc(nrows, sizeof(int)); 
     int *elemPerRowUp = (int *)calloc(nrows, sizeof(int));
     
     
+    countElemPerRow(initialFile, elemPerRowDown, elemPerRowUp, nz);  //Creating the U,D matrices
     
-    countElemPerRow(initialFile, elemPerRowDown, elemPerRowUp, nz);//Creating the U,D matrices
-    
-    printf("D= ");
-    for(int i = 0; i < nrows; i++){
-        printf("%d ", elemPerRowDown[i]);
-    }
-    printf("\n");
+    ElementsOfGraph **LowerGraph = allocateGraph(nrows , elemPerRowDown);
+    ElementsOfGraph **UpperGraph = allocateGraph(nrows , elemPerRowUp);
 
-    printf("U= ");
-    for(int i = 0; i < nrows; i++){
-        printf("%d ", elemPerRowUp[i]);
-    }   
-    printf("\n");
+    createGraph(initialFile, LowerGraph, UpperGraph, nz, nrows);
 
-    rewind(initialFile);
-    skipHeader(initialFile);
+    //int row_index = 0;
+    int col_index = 0;
+    csrMatrix->rows[0] = 0;
 
-    int row, col;
-
-    int last_row = -1;
-    int row_index = 0;//iterates through the values of the matrix
-   
-    for(int i = 0; i < nz; i++){
-        
-        fscanf(initialFile, "%d %d ", &col, &row);
-        
-        csrCols[i] = col - 1;
-
-        if(row - 1 != last_row){
-
-            csrRows[row_index] = i;
-            row_index++;
-            last_row = row - 1;
+    for(int row = 0 ; row < nrows; row++){
+        for(int col = 0; col < elemPerRowDown[row]; col++){
+            csrMatrix->cols[col_index] = LowerGraph[row][col].col;
+            col_index++;
         }
 
+        for (int col = 0; col < elemPerRowUp[row]; col++) {
+            csrMatrix->cols[col_index] = UpperGraph[row][col].col;
+            col_index++;
+        }
+
+        csrMatrix->rows[row + 1] = elemPerRowDown[row] + elemPerRowUp[row];
+        csrMatrix->rows[row + 1] += csrMatrix->rows[row];
     }
-   
+    free(elemPerRowDown);
+    free(elemPerRowUp);
+
+    
+    for(int i = 0; i < nrows; i++){
+        free(LowerGraph[i]);
+        free(UpperGraph[i]);
+    }
+    free(LowerGraph);
+    free(UpperGraph);
+}
+
+void printCsrMatrix(CSR csrMatrix, int nrows){
+    for(int i = 0; i < nrows; i++){
+        for(int j = csrMatrix.rows[i]; j < csrMatrix.rows[i + 1]; j++){
+            printf("%d ", csrMatrix.cols[j]);
+        }
+    }
+    printf("\n");
+
+    for (int i = 0; i < nrows + 1; i++){
+        printf("%d ", csrMatrix.rows[i]);
+    }
+    printf("\n");
+    
 }
 
 
-// void printMatrixΩ(int *matrix, int rows, int cols) {
-//     for (int i = 0; i < rows; i++) {
-//         for (int j = 0; j < cols; j++) {
-//             printf("%d ", matrix[i * cols + j]);
-//         }
-//         printf("\n");
-//     }
-// }
+void printGraph(int nrows, int **graph, int *elemPerRow) {
 
+    for (int i = 0; i < nrows; i++) {
+        printf("Row %d: ", i + 1);
+        for (int j = 0; j < elemPerRow[i]; j++) {
+            printf("%d ", graph[i][j]);
+        }
+        printf("\n");
+    }
+}
 
-
-// void CsrMatrixΩ(int *MatrΩ, int nrows, int clusters) {
-//     // Count the number of non-zero elements (nnz)
-//     int nnz = 0;
-//     for (int i = 0; i < nrows * clusters; i++) {
-//         if (MatrΩ[i] != 0) {
-//             nnz++;
-//         }
-//     }
-
-//     // Allocate memory for CSR arrays
-//     int *csrRows = (int *)calloc(nrows, sizeof(int));
-//     int *csrCols = (int *)calloc(nnz , sizeof(int));
-
-//     // Fill CSR arrays
-
-//     int row_index = 0; //iritates trough the matrix
-//     for (int i = 0; i < nrows; i++) {
-//         for (int j = 0; j < clusters; j++) {
-//             if (MatrΩ[i] != 0) {
-//                 csrCols[row_index] = j;
-//                 csrRows[i + 1]++;//only one non zero value per row 
-//                 row_index++;
-//             }
-//         }
-//         csrRows[i+1] += csrRows[i];
-//     }
-
-
-//     // Print the CSR matrix
-//     printf("\nCSR MatrixΩ:\n");
-//     printf("Csr Rows:");
-//     for (int i = 0; i <= nrows; i++) {
-//         printf("%d ", csrRows[i]);
-//     }
-//     printf("\n");
-//     printf("Csr Cols:");
-//     for (int i = 0; i < nnz; i++) {
-//         printf("%d ", csrCols[i]);
-//     }
-//     printf("\n");}
-
-
-
-// //random choice of clusters
-// void MatrixΩ(int clusters, int nrows, FILE *initialFile) {
-//     rewind(initialFile);
-//     skipHeader(initialFile);
-
-//     int *MatrΩ = (int *)malloc(nrows * clusters * sizeof(int));
-
-//     for (int i = 0; i < nrows; i++) {
-//         int nonZeroCol = rand() % clusters;
-
-//         for (int j = 0; j < clusters; j++) {
-//             MatrΩ[i * clusters + j] = 0;
-//         }
-
-//         MatrΩ[i * clusters + nonZeroCol] = 1;
-//     }
-
-//     // Print the matrix
-//     printf("\n MatrixΩ:\n");
-//     printMatrixΩ(MatrΩ, nrows, clusters);
-//     CsrMatrixΩ(MatrΩ , nrows , clusters);
- 
-// }
 
 int main(){
     
     FILE *fptr;
-    fptr = fopen ("./../graphs/test_matrices/small_graph_2.mtx" , "r");
+    fptr = fopen ("./../graphs/com_youtube/com_youtube.mtx" , "r");
+    
     if (fptr == NULL){
         printf("Error! opening file");
         // Program exits if file pointer returns NULL.
@@ -264,30 +241,19 @@ int main(){
 
     int nrows, ncols , nz;    
     readHeader(&nrows, &ncols, &nz, fptr);
-    
-    int *csrCols = (int *)malloc(nz * sizeof(int));
-    int *csrRows = (int *)malloc(nrows * sizeof(int));
 
-    createCsrMatrix(csrRows, csrCols, fptr, nz, nrows);
+    CSR csrMatrix;
     
-    for(int i = 0; i < nz; i++){
-        printf("%d ", csrRows[i]);
-    }
-    printf("\n");
-    for(int i = 0; i < nz; i++){
-        printf("%d ", csrCols[i]);
-    }
-    
-    int clusters = 6;  // desired number of clusters
+    csrMatrix.cols = (int *)malloc(2 * nz * sizeof(int));
+    csrMatrix.rows = (int *)malloc((nrows + 1) * sizeof(int));
+
+    createCsrMatrix(&csrMatrix, fptr, nz, nrows);
+    printCsrMatrix(csrMatrix, nrows);
    
-
-    MatrixΩ(clusters, nrows, fptr);
-
-
     fclose(fptr); 
 
-    free(csrCols);
-    free(csrRows);
+    free(csrMatrix.cols);
+    free(csrMatrix.rows);
     
 
     return 0;
