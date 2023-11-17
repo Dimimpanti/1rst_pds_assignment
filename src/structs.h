@@ -9,4 +9,10 @@ typedef struct CSR{
     int nrows;
 } CSR;
 
+typedef struct ElementsOfGraph{
+    int col;  //column of the vertex of the graph
+    int row; //row of the vertex of the graph
+} ElementsOfGraph;
+
+
 #endif

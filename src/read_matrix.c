@@ -1,14 +1,15 @@
 #include "read_matrix.h"
 #include <stdlib.h>
+#include "configuration_matrix.h"
 
 
-/**
- * @brief struct that includes the pair of row and col we read from the file
- */
-typedef struct ElementsOfGraph {
-    int col;  //column of the vertex of the graph
-    int row; //row of the vertex of the graph
-} ElementsOfGraph;
+// /**
+//  * @brief struct that includes the pair of row and col we read from the file
+//  */
+// typedef struct ElementsOfGraph {
+//     int col;  //column of the vertex of the graph
+//     int row; //row of the vertex of the graph
+// } ElementsOfGraph;
 
 
 
@@ -135,10 +136,19 @@ ElementsOfGraph **allocateGraph(int nrows, int *elemPerRow) {
     return graph;
 }
 
-//stores the pair of row and col we read from the file to the struct we built
+/**
+ * @brief Create the final Graph (lower and upper combined)
+ * 
+ * @param initialFile file pointer of the mtx file we want to read
+ * @param LowerGraph array that has the non-zero elements of the lower triangular matrix (the one we get from the file mtx)
+ * @param UpperGraph array array that has the non-zero elements of the lower triangular matrix(symmetrical to the one we get from the file mtx)
+ * @param nz number of non-zero elements of the mtx fil 
+ * @param nrows number of rows of the mtx file
+ * @return * stores struct 
+ */
 void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGraph **UpperGraph, int nz, int nrows){
     
-    // rewind(initialFile);
+    //going back to the start of the file
     fseek(initialFile, 0, SEEK_SET);
 
         
@@ -146,6 +156,7 @@ void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGrap
 
     int read_row, read_col;
 
+    //arrays of the columns of the two graphs 
     int *lowerColumnIndex = (int *)calloc(nrows, sizeof(int));
     int *upperColumnIndex = (int *)calloc(nrows, sizeof(int));
 
@@ -184,21 +195,23 @@ void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGrap
  */
  void createCsrMatrix(CSR *csrMatrix, FILE  *initialFile, int nz, int nrows){      
    
+   //arrays that stores the non zero elements of each row of the graph
     int *elemPerRowDown = (int *)calloc(nrows, sizeof(int)); 
     int *elemPerRowUp = (int *)calloc(nrows, sizeof(int));
     
     
-    countElemPerRow(initialFile, elemPerRowDown, elemPerRowUp, nz);  //Creating the U,D matrices
+    countElemPerRow(initialFile, elemPerRowDown, elemPerRowUp, nz);  //Creating the elemPerRowDown,elemPerRowUp matrices
     
     ElementsOfGraph **LowerGraph = allocateGraph(nrows , elemPerRowDown);
     ElementsOfGraph **UpperGraph = allocateGraph(nrows , elemPerRowUp);
 
-    createGraph(initialFile, LowerGraph, UpperGraph, nz, nrows);
+    createGraph(initialFile, LowerGraph, UpperGraph, nz, nrows); 
 
     //int row_index = 0;
     int col_index = 0;
     csrMatrix->rows[0] = 0;
 
+    //finding the row and col vectors that describe the Csr Matrix
     for(int row = 0 ; row < nrows; row++){
         for(int col = 0; col < elemPerRowDown[row]; col++){
             csrMatrix->cols[col_index] = LowerGraph[row][col].col;
@@ -225,22 +238,22 @@ void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGrap
     free(UpperGraph);
 }
 
-void printCsrMatrix(CSR csrMatrix, int nrows){
-    for(int i = 0; i < nrows; i++){
-        for(int j = csrMatrix.rows[i]; j < csrMatrix.rows[i + 1]; j++){
-            printf("%d ", csrMatrix.cols[j]);
-        }
-    }
-    printf("\n");
 
-    for (int i = 0; i < nrows + 1; i++){
-        printf("%d ", csrMatrix.rows[i]);
-    }
-    printf("\n");
-    
-}
+/**
+ * @brief  Prints the Csr Matrix 
+ * 
+ * @param csrMatrix 
+ * @param nrows 
+ */
+src/read_matrix.c
 
-
+/**
+ * @brief Prints the Graph
+ * 
+ * @param nrows number of rows of the mtx fil
+ * @param graph 
+ * @param elemPerRow number of non zero elements of each row of the graph
+ */
 void printGraph(int nrows, int **graph, int *elemPerRow) {
 
     for (int i = 0; i < nrows; i++) {
@@ -264,7 +277,7 @@ int main(){
         return 1;
     }
 
-    int nrows, ncols , nz;    
+    int nrows, ncols , nz , nclusters;    
     readHeader(&nrows, &ncols, &nz, fptr);
 
     CSR csrMatrix;
@@ -276,7 +289,9 @@ int main(){
 
     createCsrMatrix(&csrMatrix, fptr, nz, nrows);
     printCsrMatrix(csrMatrix, nrows);
-   
+    configurationMatrix(nclusters , nrows , &csrMatrix);
+
+
     fclose(fptr); 
 
     free(csrMatrix.cols);

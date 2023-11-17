@@ -2,9 +2,9 @@
 #define CONFIGURATION_MATRIX_H 
 
 #include <stdio.h>
+#include "structs.h"
+#include "read_matrix.h"
 
-
-
-void MatrixΩ(int clusters, int nrows, FILE *initialFile);
+void configurationMatrix(int nclusters, int nrows , CSR *csrMatxix);
 
 #endif
