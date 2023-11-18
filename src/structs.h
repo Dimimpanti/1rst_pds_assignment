@@ -1,18 +1,20 @@
 #ifndef STRUCTS_H   /* Include guard */
 #define STRUCTS_H 
 
-
 typedef struct CSR{
     int *rows;
     int *cols;
+    int *values;
     int nz;
     int nrows;
 } CSR;
 
-typedef struct ElementsOfGraph{
-    int col;  //column of the vertex of the graph
-    int row; //row of the vertex of the graph
-} ElementsOfGraph;
-
+typedef struct CSC{
+    int *rows;
+    int *cols;
+    int *values;
+    int nz;
+    int ncols;
+} CSC;
 
 #endif

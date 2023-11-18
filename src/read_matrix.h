@@ -2,24 +2,35 @@
 #define READ_MATRIX_H 
 
 #include <stdio.h>
-#include <stdlib.h>
+
 #include "structs.h"
-#include "configuration_matrix.h"
+
+
+/**
+ * @brief struct that includes the pair of row and col we read from the file
+ */
+typedef struct ElementsOfGraph {
+    int col;  //column of the vertex of the graph
+    int row; //row of the vertex of the graph
+} ElementsOfGraph;
+
 
 void readHeader(int *nrows, int *ncols ,int *nz , FILE *initialFile);
 
-void skipHeader(FILE *initialFile);
+// void skipHeader(FILE *initialFile);
 
 void createCsrMatrix(CSR *csrMatrix, FILE  *initialFile, int nz, int nrows);
 
-void countElemPerRow(FILE *initialFile, int *elemPerRowDown, int *elemPerRowUp, int nz);
+void createCscMatrix(CSC *cscMatrix, FILE  *initialFile, int nz, int nrows);
 
-ElementsOfGraph **allocateGraph(int nrows, int *elemPerRow);
+// void countElemPerRow(FILE *initialFile, int *elemPerRowDown, int *elemPerRowUp, int nz);
 
-void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGraph **UpperGraph, int nz, int nrows);
+// ElementsOfGraph **allocateGraph(int nrows, int *elemPerRow);
 
-void createCsrMatrix(CSR *csrMatrix, FILE  *initialFile, int nz, int nrows);
+// void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGraph **UpperGraph, int nz, int nrows);
 
-void printCsrMatrix(CSR csrMatrix, int nrows);
+void printCsrMatrix(CSR *csrMatrix);
+
+void printCscMatrix(CSC *cscMatrix);
 
 #endif 

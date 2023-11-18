@@ -1,16 +1,7 @@
-#include "read_matrix.h"
 #include <stdlib.h>
+
+#include "read_matrix.h"
 #include "configuration_matrix.h"
-
-
-// /**
-//  * @brief struct that includes the pair of row and col we read from the file
-//  */
-// typedef struct ElementsOfGraph {
-//     int col;  //column of the vertex of the graph
-//     int row; //row of the vertex of the graph
-// } ElementsOfGraph;
-
 
 
 /**
@@ -113,6 +104,40 @@ void countElemPerRow(FILE *initialFile, int *elemPerRowDown, int *elemPerRowUp, 
     }
 }
 
+
+/**
+ * @brief  counting the non-zero elements of the Lower and Upper matrices per column
+ * 
+ * @param initialFile  file pointer of the mtx file we want to read
+ * @param elemPerColDown  array that stores the non-zero elements of the Lower matrix per column
+ * @param elemPerColUp  array that stores the non-zero elements of the Upper matrix per column
+ * @param nz  the non-zero elements of the mtx file
+ */
+void countElemPerCol(FILE *initialFile, int *elemPerColDown, int *elemPerColUp, int nz){
+    
+    //going back to the start of the file
+    fseek(initialFile, 0, SEEK_SET);
+        
+    //skip the comments of the mtx file.
+    skipHeader(initialFile);
+
+
+    int row, col;//temporary variables to read the file
+
+
+    //reading the pairs of rows and cols and rows++ and cols++
+    for(int i = 0; i < nz; i++){
+        
+        fscanf(initialFile, "%d %d ", &row, &col);
+
+        // printf("Row: %d, Col: %d\n", row, col);
+        
+        //increasing the pair of row and col I read from the file in order to find the U,D matrices
+        elemPerColDown[col - 1]++;//row-1 -> 0indexed D
+        elemPerColUp[row - 1]++;//U
+    }
+}
+
 /**
  * @brief Allocates memory for the half of graph with dimensions  
  * nrows x elemPerRow[i]->elements from the elemPerRowDown matrix 
@@ -167,9 +192,6 @@ void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGrap
         read_row--;
         read_col--;
 
-
-        // first time run read_row = 1 and read_col = 0
-
         LowerGraph[read_row][lowerColumnIndex[read_row]].row = read_row;
         LowerGraph[read_row][lowerColumnIndex[read_row]].col = read_col;
         lowerColumnIndex[read_row]++;
@@ -183,6 +205,44 @@ void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGrap
     free(upperColumnIndex);
 }
 
+
+void creatGraphCol(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGraph **UpperGraph, int nz, int nrows){
+    
+    //going back to the start of the file
+    fseek(initialFile, 0, SEEK_SET);
+
+        
+    skipHeader(initialFile);
+
+    int read_row, read_col;
+
+    //arrays of the columns of the two graphs 
+    int *lowerColumnIndex = (int *)calloc(nrows, sizeof(int));
+    int *upperColumnIndex = (int *)calloc(nrows, sizeof(int));
+
+    for(int i = 0 ;i < nz; i++){
+        fscanf(initialFile, "%d %d ", &read_row, &read_col);
+
+        //convert to 0indexed
+        read_row--;
+        read_col--; 
+
+        LowerGraph[read_col][lowerColumnIndex[read_col]].row = read_row;
+        LowerGraph[read_col][lowerColumnIndex[read_col]].col = read_col;
+        lowerColumnIndex[read_col]++;
+        
+        // printf("LowerGraph[%d][%d].col = %d\n", read_row, lowerColumnIndex[read_row] - 1, LowerGraph[read_row][lowerColumnIndex[read_row] - 1].col);
+
+        UpperGraph[read_row][upperColumnIndex[read_row]].row = read_col;
+        UpperGraph[read_row][upperColumnIndex[read_row]].col = read_row;
+        upperColumnIndex[read_row]++;
+
+        // printf("UpperGraph[%d][%d].col = %d\n", read_col, upperColumnIndex[read_col] - 1, UpperGraph[read_col][upperColumnIndex[read_col] - 1].col);
+
+    }
+    free(lowerColumnIndex);
+    free(upperColumnIndex);
+}
 
 
 /**
@@ -226,16 +286,77 @@ void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGrap
         csrMatrix->rows[row + 1] = elemPerRowDown[row] + elemPerRowUp[row];
         csrMatrix->rows[row + 1] += csrMatrix->rows[row];
     }
-    free(elemPerRowDown);
-    free(elemPerRowUp);
 
     
     for(int i = 0; i < nrows; i++){
-        free(LowerGraph[i]);
-        free(UpperGraph[i]);
+        if (elemPerRowDown[i] != 0) {
+            free(LowerGraph[i]);
+        }
+
+        if (elemPerRowUp[i] != 0) {
+            free(UpperGraph[i]);
+        }
     }
+
     free(LowerGraph);
     free(UpperGraph);
+
+
+    free(elemPerRowDown);
+    free(elemPerRowUp);
+}
+
+
+void createCscMatrix(CSC *cscMatrix, FILE  *initialFile, int nz, int ncols){      
+   
+   //arrays that stores the non zero elements of each row of the graph
+    int *elemPerColDown = (int *)calloc(ncols, sizeof(int)); 
+    int *elemPerColUp = (int *)calloc(ncols, sizeof(int));
+    
+    
+    countElemPerCol(initialFile, elemPerColDown, elemPerColUp, nz);  //Creating the elemPerRowDown,elemPerRowUp matrices
+    
+    ElementsOfGraph **LowerGraph = allocateGraph(ncols , elemPerColDown);
+    ElementsOfGraph **UpperGraph = allocateGraph(ncols , elemPerColUp);
+
+    creatGraphCol(initialFile, LowerGraph, UpperGraph, nz, ncols); 
+
+    //int row_index = 0;
+    int col_index = 0;
+    cscMatrix->cols[0] = 0;
+
+    //finding the row and col vectors that describe the Csr Matrix
+    for(int col = 0 ; col < ncols; col++){
+        for (int row = 0; row < elemPerColUp[col]; row++) {
+            cscMatrix->rows[col_index] = UpperGraph[col][row].row;
+            col_index++;
+        }
+
+        for(int row = 0; row < elemPerColDown[col]; row++){
+            cscMatrix->rows[col_index] = LowerGraph[col][row].row;
+            col_index++;
+        }
+
+        cscMatrix->cols[col + 1] = elemPerColDown[col] + elemPerColUp[col];
+        cscMatrix->cols[col + 1] += cscMatrix->cols[col];
+    }
+    
+    for(int i = 0; i < ncols; i++){
+        if (elemPerColDown[i] != 0) {
+            free(LowerGraph[i]);
+        }
+        if (elemPerColUp[i] != 0) {
+            free(UpperGraph[i]);
+        }
+    }
+
+    free(LowerGraph);
+    free(UpperGraph);
+
+
+    free(elemPerColDown);
+    free(elemPerColUp);
+
 }
 
 
@@ -245,7 +366,45 @@ void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGrap
  * @param csrMatrix 
  * @param nrows 
  */
-src/read_matrix.c
+void printCsrMatrix(CSR *csrMatrix) {
+    
+    printf("Columns: ");
+    
+    for (int i = 0; i < csrMatrix->nz; i++) {
+        printf("%d ", csrMatrix->cols[i]);
+    }
+    
+    printf("\n");
+
+    printf("Indexes: ");
+    
+    for (int i = 0; i < csrMatrix->nrows + 1; i++) {
+        printf("%d ", csrMatrix->rows[i]);
+    }
+    
+    printf("\n");
+}
+
+
+void printCscMatrix(CSC *cscMatrix) {
+    
+    printf("Rows: ");
+    
+    for (int i = 0; i <  cscMatrix->nz; i++) {
+        printf("%d ", cscMatrix->rows[i]);
+    }
+    
+    printf("\n");
+
+    printf("Indexes: ");
+    
+    for (int i = 0; i < cscMatrix->ncols + 1; i++) {
+        printf("%d ", cscMatrix->cols[i]);
+    }
+    
+    printf("\n");
+}
+
 
 /**
  * @brief Prints the Graph
@@ -265,38 +424,3 @@ void printGraph(int nrows, int **graph, int *elemPerRow) {
     }
 }
 
-
-int main(){
-    
-    FILE *fptr;
-    fptr = fopen ("./../graphs/com_youtube/com_youtube.mtx" , "r");
-    
-    if (fptr == NULL){
-        printf("Error! opening file");
-        // Program exits if file pointer returns NULL.
-        return 1;
-    }
-
-    int nrows, ncols , nz , nclusters;    
-    readHeader(&nrows, &ncols, &nz, fptr);
-
-    CSR csrMatrix;
-    
-    csrMatrix.cols = (int *)malloc(2 * nz * sizeof(int));
-    csrMatrix.rows = (int *)malloc((nrows + 1) * sizeof(int));
-    csrMatrix.nrows= nrows;
-    csrMatrix.nz = nz;
-
-    createCsrMatrix(&csrMatrix, fptr, nz, nrows);
-    printCsrMatrix(csrMatrix, nrows);
-    configurationMatrix(nclusters , nrows , &csrMatrix);
-
-
-    fclose(fptr); 
-
-    free(csrMatrix.cols);
-    free(csrMatrix.rows);
-    
-
-    return 0;
-}
