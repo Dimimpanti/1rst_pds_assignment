@@ -51,7 +51,7 @@ int main(){
     int nrows, ncols , nz;
     int nclusters = 10000;
 
-    readHeader(&nrows, &ncols, &nz, fptr);
+    int hasValues = readHeader(&nrows, &ncols, &nz, fptr);
 
     // Create the CSR matrix from the file
     CSC cscMatrix;
@@ -66,7 +66,7 @@ int main(){
     cscMatrix.values = (int *)malloc(cscMatrix.nz * sizeof(int));         //TODO : free done
     
 
-    createCscMatrix(&cscMatrix, fptr);
+    createCscMatrix(&cscMatrix, fptr, hasValues);
     // printCscMatrix(&cscMatrix);
 
     gettimeofday(&end, NULL);

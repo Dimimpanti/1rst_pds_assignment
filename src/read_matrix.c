@@ -2,6 +2,7 @@
 
 #include "read_matrix.h"
 
+
 /**
  * @brief skip the comments of the mtx file and get the nrows , ncols ,nz
  * 
@@ -9,8 +10,10 @@
  * @param ncols  number of cols of the mtx file
  * @param nz   number of non-zero elements of the mtx file
  * @param initialFile  file pointer of the mtx file we want to read
+ * 
+ * @return 1 if the file has values and 0 if it doesn't
  */
-void readHeader(int *nrows, int *ncols ,int *nz , FILE *initialFile){
+int readHeader(int *nrows, int *ncols ,int *nz , FILE *initialFile){
     char cursor; //temporary variable to read the file
 
     //skip the comments of the mtx file. The comments start with %
@@ -35,6 +38,31 @@ void readHeader(int *nrows, int *ncols ,int *nz , FILE *initialFile){
     
     // printf("%d %d %d\n", *nrows, *ncols, *nz);
 
+
+    // test the file if it has a value column
+    int matrixHasValues = 0;
+    int t1 ,t2;
+
+    fscanf(initialFile, "%d %d", &t1, &t2);
+
+
+    char test = getc(initialFile);
+
+    if (test != ' '){
+        return 0;
+    }
+
+    while(test != '\n' || test != '\r'){
+
+        if (test != ' ') {
+            matrixHasValues = 1;
+            break;
+        }
+
+        test = getc(initialFile);
+    }
+
+    return matrixHasValues;
 }
 
 
@@ -77,7 +105,7 @@ void skipHeader(FILE *initialFile){
  * @param elemPerRowUp array that stores the non-zero elements of the Upper matrix per row
  * @param nz  the non-zero elements of the mtx file
  */
-void countElemPerRow(FILE *initialFile, int *elemPerRowDown, int *elemPerRowUp, int nz){
+void countElemPerRow(FILE *initialFile, int *elemPerRowDown, int *elemPerRowUp, int nz, int matrixHasValues){
     
     //going back to the start of the file
     fseek(initialFile, 0, SEEK_SET);
@@ -87,7 +115,7 @@ void countElemPerRow(FILE *initialFile, int *elemPerRowDown, int *elemPerRowUp, 
 
 
     int row, col;//temporary variables to read the file
-
+    char temp_buffer[500];
 
     //reading the pairs of rows and cols and rows++ and cols++
     for(int i = 0; i < nz; i++){
@@ -99,6 +127,11 @@ void countElemPerRow(FILE *initialFile, int *elemPerRowDown, int *elemPerRowUp, 
         //increasing the pair of row and col I read from the file in order to find the U,D matrices
         elemPerRowDown[row - 1]++;//row-1 -> 0indexed D
         elemPerRowUp[col - 1]++;//U
+
+        // skip the values of the matrix by reading until \n
+        if (matrixHasValues) {
+            fgets(temp_buffer, 100, initialFile);
+        }
     }
 }
 
@@ -111,7 +144,7 @@ void countElemPerRow(FILE *initialFile, int *elemPerRowDown, int *elemPerRowUp, 
  * @param elemPerColUp  array that stores the non-zero elements of the Upper matrix per column
  * @param nz  the non-zero elements of the mtx file
  */
-void countElemPerCol(FILE *initialFile, int *elemPerColDown, int *elemPerColUp, int nz){
+void countElemPerCol(FILE *initialFile, int *elemPerColDown, int *elemPerColUp, int nz, int matrixHasValues){
     
     //going back to the start of the file
     fseek(initialFile, 0, SEEK_SET);
@@ -121,7 +154,7 @@ void countElemPerCol(FILE *initialFile, int *elemPerColDown, int *elemPerColUp, 
 
 
     int row, col;//temporary variables to read the file
-
+    char temp_buffer[500];
 
     //reading the pairs of rows and cols and rows++ and cols++
     for(int i = 0; i < nz / 2; i++){
@@ -133,6 +166,11 @@ void countElemPerCol(FILE *initialFile, int *elemPerColDown, int *elemPerColUp, 
         //increasing the pair of row and col I read from the file in order to find the U,D matrices
         elemPerColDown[col - 1]++;//row-1 -> 0indexed D
         elemPerColUp[row - 1]++;//U
+
+        // skip the values of the matrix by reading until \n
+        if (matrixHasValues) {
+            fgets(temp_buffer, 100, initialFile);
+        }
     }
 }
 
@@ -169,7 +207,7 @@ ElementsOfGraph **allocateGraph(int nrows, int *elemPerRow) {
  * @param nrows number of rows of the mtx file
  * @return * stores struct 
  */
-void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGraph **UpperGraph, int nz, int nrows){
+void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGraph **UpperGraph, int nz, int nrows, int matrixHasValues){
     
     //going back to the start of the file
     fseek(initialFile, 0, SEEK_SET);
@@ -178,6 +216,7 @@ void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGrap
     skipHeader(initialFile);
 
     int read_row, read_col;
+    char temp_buffer[500];
 
     //arrays of the columns of the two graphs 
     int *lowerColumnIndex = (int *)calloc(nrows, sizeof(int));
@@ -198,13 +237,18 @@ void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGrap
         UpperGraph[read_col][upperColumnIndex[read_col]].col = read_row;
         upperColumnIndex[read_col]++;
 
+        // skip the values of the matrix by reading until \n
+        if (matrixHasValues) {
+            fgets(temp_buffer, 100, initialFile);
+        }
+
     }
     free(lowerColumnIndex);
     free(upperColumnIndex);
 }
 
 
-void creatGraphCol(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGraph **UpperGraph, int nz, int nrows){
+void creatGraphCol(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGraph **UpperGraph, int nz, int nrows, int matrixHasValues){
     
     //going back to the start of the file
     fseek(initialFile, 0, SEEK_SET);
@@ -217,6 +261,8 @@ void creatGraphCol(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGr
     //arrays of the columns of the two graphs 
     int *lowerColumnIndex = (int *)calloc(nrows, sizeof(int));
     int *upperColumnIndex = (int *)calloc(nrows, sizeof(int));
+
+    char temp_buffer[500];
 
     for(int i = 0 ;i < nz / 2; i++){
         fscanf(initialFile, "%d %d ", &read_row, &read_col);
@@ -237,6 +283,11 @@ void creatGraphCol(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGr
 
         // printf("UpperGraph[%d][%d].col = %d\n", read_col, upperColumnIndex[read_col] - 1, UpperGraph[read_col][upperColumnIndex[read_col] - 1].col);
 
+        // skip the values of the matrix by reading until \n
+        if (matrixHasValues) {
+            fgets(temp_buffer, 100, initialFile);
+        }
+
     }
     free(lowerColumnIndex);
     free(upperColumnIndex);
@@ -251,19 +302,19 @@ void creatGraphCol(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGr
  * @param fptr file pointer
  * @param nz number of nz elements
  */
- void createCsrMatrix(CSR *csrMatrix, FILE  *initialFile){      
+ void createCsrMatrix(CSR *csrMatrix, FILE  *initialFile, int matrixHasValues){      
    
    //arrays that stores the non zero elements of each row of the graph
     int *elemPerRowDown = (int *)calloc(csrMatrix->nrows, sizeof(int));  // TODO: free done
     int *elemPerRowUp = (int *)calloc(csrMatrix->nrows, sizeof(int));    // TODO: free done
     
     
-    countElemPerRow(initialFile, elemPerRowDown, elemPerRowUp, csrMatrix->nz);  //Creating the elemPerRowDown,elemPerRowUp matrices
+    countElemPerRow(initialFile, elemPerRowDown, elemPerRowUp, csrMatrix->nz, matrixHasValues);  //Creating the elemPerRowDown,elemPerRowUp matrices
     
     ElementsOfGraph **LowerGraph = allocateGraph(csrMatrix->nrows , elemPerRowDown);
     ElementsOfGraph **UpperGraph = allocateGraph(csrMatrix->nrows , elemPerRowUp);
 
-    createGraph(initialFile, LowerGraph, UpperGraph, csrMatrix->nz, csrMatrix->nrows); 
+    createGraph(initialFile, LowerGraph, UpperGraph, csrMatrix->nz, csrMatrix->nrows, matrixHasValues); 
 
     //int row_index = 0;
     int col_index = 0;
@@ -315,19 +366,19 @@ void creatGraphCol(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGr
 }
 
 
-void createCscMatrix(CSC *cscMatrix, FILE  *initialFile){      
+void createCscMatrix(CSC *cscMatrix, FILE  *initialFile, int matrixHasValues){      
    
    //arrays that stores the non zero elements of each row of the graph
     int *elemPerColDown = (int *)calloc(cscMatrix->ncols, sizeof(int));  // TODO: free done
     int *elemPerColUp = (int *)calloc(cscMatrix->ncols, sizeof(int));    // TODO: free done
     
     
-    countElemPerCol(initialFile, elemPerColDown, elemPerColUp, cscMatrix->nz);  //Creating the elemPerRowDown,elemPerRowUp matrices
+    countElemPerCol(initialFile, elemPerColDown, elemPerColUp, cscMatrix->nz, matrixHasValues);  //Creating the elemPerRowDown,elemPerRowUp matrices
     
     ElementsOfGraph **LowerGraph = allocateGraph(cscMatrix->ncols, elemPerColDown);
     ElementsOfGraph **UpperGraph = allocateGraph(cscMatrix->ncols, elemPerColUp);
 
-    creatGraphCol(initialFile, LowerGraph, UpperGraph, cscMatrix->nz, cscMatrix->ncols); 
+    creatGraphCol(initialFile, LowerGraph, UpperGraph, cscMatrix->nz, cscMatrix->ncols, matrixHasValues); 
 
     //int row_index = 0;
     int col_index = 0;

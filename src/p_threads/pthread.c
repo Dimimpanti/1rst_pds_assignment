@@ -31,10 +31,11 @@ double measureTime(struct timeval begin, struct timeval end) {
 int main(){
 
     FILE *fptr;
-    fptr = fopen ("./../../graphs/belgium_osm/belgium_osm.mtx" , "r");
+    // fptr = fopen ("./../../graphs/belgium_osm/belgium_osm.mtx" , "r");
     // fptr = fopen ("./../../graphs/mycielskian13/mycielskian13.mtx" , "r");
     // fptr = fopen ("./../../graphs/com_youtube/com_youtube.mtx" , "r");
     // fptr = fopen ("./../../graphs/test_matrices/small_graph_2.mtx" , "r");
+    fptr = fopen ("./../../graphs/s3dkq4m2.mtx" , "r");
     
     if (fptr == NULL){
         printf("Error! opening file");
@@ -49,9 +50,9 @@ int main(){
     gettimeofday(&totalBegin, NULL);
 
     int nrows, ncols , nz;
-    int nclusters = 10000;
+    int nclusters = 1000;
 
-    readHeader(&nrows, &ncols, &nz, fptr);
+    int hasValues = readHeader(&nrows, &ncols, &nz, fptr);
 
     // Create the CSR matrix from the file
     CSC cscMatrix;
@@ -66,7 +67,7 @@ int main(){
     cscMatrix.values = (int *)malloc(cscMatrix.nz * sizeof(int));         //TODO : free done
     
 
-    createCscMatrix(&cscMatrix, fptr);
+    createCscMatrix(&cscMatrix, fptr, hasValues);
     // printCscMatrix(&cscMatrix);
 
     gettimeofday(&end, NULL);

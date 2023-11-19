@@ -14,14 +14,11 @@ typedef struct ElementsOfGraph {
     int row; //row of the vertex of the graph
 } ElementsOfGraph;
 
+int readHeader(int *nrows, int *ncols ,int *nz , FILE *initialFile);
 
-void readHeader(int *nrows, int *ncols ,int *nz , FILE *initialFile);
+void createCsrMatrix(CSR *csrMatrix, FILE  *initialFile, int matrixHasValues);
 
-// void skipHeader(FILE *initialFile);
-
-void createCsrMatrix(CSR *csrMatrix, FILE  *initialFile);
-
-void createCscMatrix(CSC *cscMatrix, FILE  *initialFile);
+void createCscMatrix(CSC *cscMatrix, FILE  *initialFile, int matrixHasValues);
 
 void printCsrMatrix(CSR *csrMatrix);
 
