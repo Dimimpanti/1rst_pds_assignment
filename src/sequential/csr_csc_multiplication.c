@@ -14,21 +14,22 @@
  * @param col       The column of the CSC matrix
  * @return int      The number of common elements between the row and the column
  */
-int multiplyRowCol(int startRow , int endRow , int startCol , int endCol , int *row , int *col){
+int multiplyRowCol(int startRow , int endRow , int startCol , int endCol , int *row , int *col, int *csrValues, int *cscValues){
 
     int sum = 0;
     int row_index = startRow;
     int col_index = startCol;
 
     // Compare the elements of the row and the column
-    while(row_index < endRow && col_index < endCol){
+    while(row_index <= endRow && col_index <= endCol){
 
         // If the elements are equal, increase the sum and the indices
         if(row[row_index] == col[col_index]){
-            sum++;
+            sum += csrValues[row_index] * cscValues[col_index];
             row_index++;
             col_index++;
         }
+
         // If the element of the row is smaller than the element of the column, increase the row index
         else if(row[row_index] < col[col_index]){
             row_index++;
@@ -53,9 +54,6 @@ int multiplyRowCol(int startRow , int endRow , int startCol , int endCol , int *
  */
 void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
 
-    int row_index = 0;
-    int res_index = 0;
-    int nnzInRow = 0;
 
     // Allocate the output matrix. The nz elements are the maximum number of non-zero elements that can be in the output matrix
     if (csrMatrix->nz > cscMatrix->nz){
@@ -65,6 +63,7 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
     }
 
     output->nrows = csrMatrix->nrows;
+    output->ncols = cscMatrix->ncols;
     output->cols = (int *)malloc(output->nz * sizeof(int));           //TODO : free
     output->rows = (int *)malloc((output->nrows + 1) * sizeof(int));  //TODO : free
     output->values = (int *)malloc(output->nz * sizeof(int));         //TODO : free
@@ -72,26 +71,36 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
     output->rows[0] = 0;
     output->nz = 0;
 
+    int startRow = 0;
+    int endRow = 0;
+
+    int startCol = 0;
+    int endCol = 0;
+
+    int res = 0;
+    int res_index = 0;
+    int nnzInRow = 0;
+
     // For every row of the CSR matrix
     for(int row = 0; row < csrMatrix->nrows; row++){
 
         // The starting index of the row of the CSR matrix
-        int startRow = csrMatrix->rows[row_index];
+        startRow = csrMatrix->rows[row];
 
         // The ending index of the row of the CSR matrix
-        int endRow = csrMatrix->rows[row_index + 1] - 1;
+        endRow = csrMatrix->rows[row + 1] - 1;
 
         // For every column of the CSC matrix
         for(int col = 0; col < cscMatrix->ncols; col++){
 
             // The starting index of the column of the CSC matrix
-            int startCol = cscMatrix->cols[col];
+            startCol = cscMatrix->cols[col];
 
             // The ending index of the column of the CSC matrix
-            int endCol = cscMatrix->cols[col + 1] - 1;
+            endCol = cscMatrix->cols[col + 1] - 1;
 
             // Multiply the row with the column
-            int res = multiplyRowCol(startRow , endRow , startCol , endCol , csrMatrix->cols , cscMatrix->rows);
+            res = multiplyRowCol(startRow, endRow, startCol, endCol, csrMatrix->cols, cscMatrix->rows, csrMatrix->values, cscMatrix->values);
 
             if (res != 0){
                 // Store the column index
@@ -114,14 +123,15 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
         // Set the number of non-zero elements in the output matrix
         output->nz += nnzInRow;
 
-        // Increase the row index
-        row_index++;
-
         // Reset the number of non-zero elements in the row
         nnzInRow = 0;
-    }
 
-    
+        
+        // for every 100 rows print the progress
+        if (row % 100 == 0 || row == csrMatrix->nrows - 1){
+            printf("Progress: row %d -> %.2f%%\n", row, (float)row / (csrMatrix->nrows - 1) * 100);
+        }
+    }
 }
 
 
@@ -130,45 +140,32 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
  * 
  * @param csrMatrix  The CSR matrix
  */
-void printDenseMatrix(CSR *csrMatrix){
+void printDenseCSRMatrix(CSR *csrMatrix){
 
-    int row_index = 0;
-    int col_index = 0;
+    int startCol = 0;
+    int endCol = 0;
+
+    int rowIndex = 0;
+    int colIndex = 0;
 
     // For every row of the CSR matrix
     for(int row = 0; row < csrMatrix->nrows; row++){
 
-        // The starting index of the row of the CSR matrix
-        int startRow = csrMatrix->rows[row_index];
-
-        // The ending index of the row of the CSR matrix
-        int endRow = csrMatrix->rows[row_index + 1] - 1;
-
-        // For every column of the CSR matrix
-        for(int col = 0; col < csrMatrix->nrows; col++){
-
-            // The starting index of the column of the CSR matrix
-            int startCol = csrMatrix->cols[col_index];
-
-            // The ending index of the column of the CSR matrix
-            int endCol = csrMatrix->cols[col_index + 1] - 1;
-
-            // If the row and the column have common elements, print the number of common elements
-            if(row_index < csrMatrix->nrows && col_index < csrMatrix->nrows && row == csrMatrix->rows[row_index] && col == csrMatrix->cols[col_index]){
-                printf("%d ", csrMatrix->values[col_index]);
-                col_index++;
-            }
-            // If the row and the column do not have common elements, print 0
-            else{
+        startCol = csrMatrix->rows[rowIndex];
+        endCol = csrMatrix->rows[rowIndex + 1] - 1;
+        
+        for (int col = 0; col < csrMatrix->ncols; col++){
+            if (col == csrMatrix->cols[startCol + colIndex] && colIndex <= endCol){
+                printf("%d ", csrMatrix->values[startCol + colIndex]);
+                colIndex++;
+            } else {
                 printf("0 ");
             }
         }
-
-        // Increase the row index
-        row_index++;
-
-        // Print a new line
         printf("\n");
+
+        rowIndex++;
+        colIndex = 0;
     }
 }
 

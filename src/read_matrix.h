@@ -19,15 +19,9 @@ void readHeader(int *nrows, int *ncols ,int *nz , FILE *initialFile);
 
 // void skipHeader(FILE *initialFile);
 
-void createCsrMatrix(CSR *csrMatrix, FILE  *initialFile, int nz, int nrows);
+void createCsrMatrix(CSR *csrMatrix, FILE  *initialFile);
 
-void createCscMatrix(CSC *cscMatrix, FILE  *initialFile, int nz, int nrows);
-
-// void countElemPerRow(FILE *initialFile, int *elemPerRowDown, int *elemPerRowUp, int nz);
-
-// ElementsOfGraph **allocateGraph(int nrows, int *elemPerRow);
-
-// void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGraph **UpperGraph, int nz, int nrows);
+void createCscMatrix(CSC *cscMatrix, FILE  *initialFile);
 
 void printCsrMatrix(CSR *csrMatrix);
 
