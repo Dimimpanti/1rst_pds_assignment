@@ -31,9 +31,9 @@ double measureTime(struct timeval begin, struct timeval end) {
 int main(){
 
     FILE *fptr;
-    // fptr = fopen ("./../../graphs/belgium_osm/belgium_osm.mtx" , "r");
+    fptr = fopen ("./../../graphs/belgium_osm/belgium_osm.mtx" , "r");
     // fptr = fopen ("./../../graphs/mycielskian13/mycielskian13.mtx" , "r");
-    fptr = fopen ("./../../graphs/com_youtube/com_youtube.mtx" , "r");
+    // fptr = fopen ("./../../graphs/com_youtube/com_youtube.mtx" , "r");
     // fptr = fopen ("./../../graphs/test_matrices/small_graph_2.mtx" , "r");
     
     if (fptr == NULL){

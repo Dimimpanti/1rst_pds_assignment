@@ -3,8 +3,8 @@
 #include <sys/time.h>
 
 #include "../read_matrix.h"
-#include "configuration_matrix.h"
-#include "csr_csc_multiplication.h"
+#include "configuration_matrix_openmp.h"
+#include "csr_csc_multiplication_openmp.h"
 #include "../structs.h"
 
 
@@ -49,7 +49,7 @@ int main(){
     gettimeofday(&totalBegin, NULL);
 
     int nrows, ncols , nz;
-    int nclusters = 4;
+    int nclusters = 10000;
 
     readHeader(&nrows, &ncols, &nz, fptr);
 
