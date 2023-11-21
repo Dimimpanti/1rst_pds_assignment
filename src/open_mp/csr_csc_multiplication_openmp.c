@@ -69,7 +69,7 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
     output->rows = (int *)malloc((output->nrows + 1) * sizeof(int));  //TODO : free
     output->values = (int *)malloc(output->nz * sizeof(int));         //TODO : free
 
-    output->rows[0] = 0;
+    output->rows[0] = 0; 
     output->nz = 0;
 
     // print information about the matrices

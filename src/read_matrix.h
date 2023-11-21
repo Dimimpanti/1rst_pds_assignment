@@ -6,6 +6,7 @@
 #include "structs.h"
 
 
+
 /**
  * @brief struct that includes the pair of row and col we read from the file
  */

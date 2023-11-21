@@ -16,9 +16,9 @@
  */
 int multiplyRowCol(int startRow , int endRow , int startCol , int endCol , int *row , int *col, int *csrValues, int *cscValues){
 
-    int sum = 0;
-    int row_index = startRow;
-    int col_index = startCol;
+    int sum = 0; // the sum of the multiplication of the common elements
+    int row_index = startRow; //the index of the row we are looking at
+    int col_index = startCol; //the index of the column we are looking at
 
     // Compare the elements of the row and the column
     while(row_index <= endRow && col_index <= endCol){
@@ -68,18 +68,18 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
     output->rows = (int *)malloc((output->nrows + 1) * sizeof(int));  //TODO : free
     output->values = (int *)malloc(output->nz * sizeof(int));         //TODO : free
 
-    output->rows[0] = 0;
+    output->rows[0] = 0; // the first element of the rows array at a Csr matrix is 0
     output->nz = 0;
 
-    int startRow = 0;
-    int endRow = 0;
+    int startRow = 0; // the starting index of the row of the CSR matrix
+    int endRow = 0; // the ending index of the row of the CSR matrix
 
-    int startCol = 0;
-    int endCol = 0;
-
-    int res = 0;
-    int res_index = 0;
-    int nnzInRow = 0;
+    int startCol = 0; // the starting index of the column of the CSC matrix
+    int endCol = 0; // the ending index of the column of the CSC matrix
+ 
+    int res = 0;   // the result of the multiplication of the row with the column
+    int res_index = 0; // the index of the output matrix
+    int nnzInRow = 0; // the number of non-zero elements in the row
 
     // print information about the matrices
     printf("\n");
@@ -163,11 +163,11 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
  */
 void printDenseCSRMatrix(CSR *csrMatrix){
 
-    int startCol = 0;
-    int endCol = 0;
+    int startCol = 0; // the starting index of the column of the CSR matrix
+    int endCol = 0;  // the ending index of the column of the CSR matrix
 
-    int rowIndex = 0;
-    int colIndex = 0;
+    int rowIndex = 0; // the index of the row of the CSR matrix
+    int colIndex = 0; // the index of the column of the CSR matrix
 
     int maxDigits = 0;
 
