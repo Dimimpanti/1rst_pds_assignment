@@ -53,7 +53,7 @@ int multiplyRowCol(int startRow , int endRow , int startCol , int endCol , int *
  * @param cscMatrix  The CSC matrix
  * @param output     The output matrix
  */
-void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
+void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output, int numThreads){
 
 
     // Allocate the output matrix. The nz elements are the maximum number of non-zero elements that can be in the output matrix
@@ -99,9 +99,9 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
 
     int nonZeroElements = 0;
 
-    omp_set_num_threads(32);
+    omp_set_num_threads(numThreads);
 
-    #pragma omp parallel for default(none) schedule(dynamic, 10) shared(output, res_index, csrMatrix, cscMatrix) \
+    #pragma omp parallel for default(none) schedule(dynamic, csrMatrix->nrows) shared(output, res_index, csrMatrix, cscMatrix, numThreads) \
     private(nnzInRow, startRow, endRow, startCol, endCol, res) reduction(+: nonZeroElements)
 
     // For every row of the CSR matrix

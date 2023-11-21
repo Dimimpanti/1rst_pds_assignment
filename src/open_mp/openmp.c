@@ -30,8 +30,8 @@ double measureTime(struct timeval begin, struct timeval end) {
 
 int main(int argc, char *argv[]){
 
-    if (argc != 3) {
-        printf("\n\n    Usage: ./sequential <path_to_graph> <number_of_clusters>\n\n");
+    if (argc != 4) {
+        printf("\n\n    Usage: ./sequential <path_to_graph> <number_of_clusters> <number_of_threads>\n\n");
         return 1;
     }
 
@@ -48,6 +48,7 @@ int main(int argc, char *argv[]){
     }
     
     int nclusters = atoi(argv[2]);
+    int nthreads = atoi(argv[3]);
 
     struct timeval begin, end, totalBegin, totalEnd;
 
@@ -121,7 +122,7 @@ int main(int argc, char *argv[]){
     CSR configTProduct;
 
     // Multiply the transpose of the configuration matrix with the original matrix
-    csrCscMultiplication(&csrConfigTMatrix, &cscMatrix, &configTProduct);
+    csrCscMultiplication(&csrConfigTMatrix, &cscMatrix, &configTProduct, nthreads);
 
     // printCsrMatrix(&configTProduct);
     // printDenseCSRMatrix(&configTProduct);
@@ -131,7 +132,7 @@ int main(int argc, char *argv[]){
     // Multiply the configuration matrix with the result of the previous multiplication
     printf("    Multiplying Omega and the result of the previous multiplication ...\n\n");
 
-    csrCscMultiplication(&configTProduct, &cscConfigMatrix, &csrFinalProduct); 
+    csrCscMultiplication(&configTProduct, &cscConfigMatrix, &csrFinalProduct, nthreads); 
     // printCsrMatrix(&csrFinalProduct);
     printDenseCSRMatrix(&csrFinalProduct);
 

@@ -3,7 +3,7 @@
 
 #include "../structs.h"
 
-void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output);
+void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output, int numThreads);
 
 void printDenseCSRMatrix(CSR *csrMatrix);
 

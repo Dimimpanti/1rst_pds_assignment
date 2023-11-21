@@ -32,14 +32,15 @@ CILK_FILES := $(CILK_FILES:%=$(CILK_BUILDDIR)/%.o)
 
 # Arguments
 GRAPH = ./graphs/mycielskian13/mycielskian13.mtx
-N_THREADS = 16
+N_THREADS = 8
 N_CLUSTERS = 4
-CILK_NWORKERS = 16
+CILK_NWORKERS = 8
 CILK_TASKS = 32
 
 
 CC_FLAGS = -O3 -g -Wall
 
+all: build_sequential build_pthread build_openmp build_cilk
 
 $(SEQ_DIR)/sequential.out: $(SEQ_FILES)
 	@echo
@@ -115,7 +116,7 @@ build_openmp: $(OPENMP_DIR)/openmp.out
 run_openmp: $(OPENMP_DIR)/openmp.out
 	@ echo
 	@ echo "	Running openmp version..."
-	@ $(OPENMP_BUILDDIR)/openmp.out $(GRAPH) $(N_CLUSTERS)
+	@ $(OPENMP_BUILDDIR)/openmp.out $(GRAPH) $(N_CLUSTERS) $(N_THREADS)
 	@ echo
 	@ echo
 
