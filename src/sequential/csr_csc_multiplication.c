@@ -81,6 +81,21 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
     int res_index = 0;
     int nnzInRow = 0;
 
+    // print information about the matrices
+    printf("\n");
+    printf("        CSR Matrix:\n");
+    printf("            Number of rows: %d\n", csrMatrix->nrows);
+    printf("            Number of columns: %d\n", csrMatrix->ncols);
+    printf("            Number of non-zero elements: %d\n", csrMatrix->nz);
+    printf("        CSC Matrix:\n");
+    printf("            Number of rows: %d\n", cscMatrix->nrows);
+    printf("            Number of columns: %d\n", cscMatrix->ncols);
+    printf("            Number of non-zero elements: %d\n", cscMatrix->nz);
+    printf("        Output Matrix:\n");
+    printf("            Number of rows: %d\n", output->nrows);
+    printf("            Number of columns: %d\n\n", output->ncols);
+    printf("        Processing...\n");
+
     // For every row of the CSR matrix
     for(int row = 0; row < csrMatrix->nrows; row++){
 
@@ -115,6 +130,13 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
                 // Increase the index of the output matrix
                 res_index++;
             }
+
+            // for every 200000 cols print the progress
+            // if (col % 200000 == 0 || col == cscMatrix->ncols - 1 || col == 0){
+            //     printf("            Row %d Progress: %.2f%%", row, (float)col / (cscMatrix->ncols - 1) * 100);
+            //     printf("\r");
+            //     fflush(stdout);
+            // }
         }
 
         // Store the number of non-zero elements in the row
@@ -126,12 +148,11 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
         // Reset the number of non-zero elements in the row
         nnzInRow = 0;
 
-        
-        // for every 100 rows print the progress
-        if (row % 100 == 0 || row == csrMatrix->nrows - 1){
-            printf("Progress: row %d -> %.2f%%\n", row, (float)row / (csrMatrix->nrows - 1) * 100);
-        }
+        // printf("\r                                                                  ");
+        // printf("\r");
     }
+
+    printf("\n\n");
 }
 
 
@@ -148,7 +169,9 @@ void printDenseCSRMatrix(CSR *csrMatrix){
     int rowIndex = 0;
     int colIndex = 0;
 
-    // For every row of the CSR matrix
+    int maxDigits = 0;
+
+    // Find the maximum number of digits in the matrix
     for(int row = 0; row < csrMatrix->nrows; row++){
 
         startCol = csrMatrix->rows[rowIndex];
@@ -156,10 +179,45 @@ void printDenseCSRMatrix(CSR *csrMatrix){
         
         for (int col = 0; col < csrMatrix->ncols; col++){
             if (col == csrMatrix->cols[startCol + colIndex] && colIndex <= endCol){
-                printf("%d ", csrMatrix->values[startCol + colIndex]);
+                if (maxDigits < csrMatrix->values[startCol + colIndex]){
+                    maxDigits = csrMatrix->values[startCol + colIndex];
+                }
+                colIndex++;
+            }
+        }
+        rowIndex++;
+        colIndex = 0;
+    }
+
+    // Find the number of digits of the maximum number
+    int digits = 0;
+    while(maxDigits != 0){
+        maxDigits /= 10;
+        digits++;
+    }
+
+    // Print the matrix
+    rowIndex = 0;
+    colIndex = 0;
+    printf("\n");
+    printf("        Dense CSR Matrix:\n");
+    printf("            Number of rows: %d\n", csrMatrix->nrows);
+    printf("            Number of columns: %d\n", csrMatrix->ncols);
+    printf("            Number of non-zero elements: %d\n\n", csrMatrix->nz);
+
+    for(int row = 0; row < csrMatrix->nrows; row++){
+
+        startCol = csrMatrix->rows[rowIndex];
+        endCol = csrMatrix->rows[rowIndex + 1] - 1;
+        
+        printf("            ");
+
+        for (int col = 0; col < csrMatrix->ncols; col++){
+            if (col == csrMatrix->cols[startCol + colIndex] && colIndex <= endCol){
+                printf("%*d ", digits, csrMatrix->values[startCol + colIndex]);
                 colIndex++;
             } else {
-                printf("0 ");
+                printf("%*d ", digits, 0);
             }
         }
         printf("\n");
@@ -167,5 +225,7 @@ void printDenseCSRMatrix(CSR *csrMatrix){
         rowIndex++;
         colIndex = 0;
     }
+
+    printf("\n");
 }
 

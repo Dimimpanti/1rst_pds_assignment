@@ -1,3 +1,4 @@
 .vscode/
+build_debug/
+graphs/
 .DS_Store
-**.out

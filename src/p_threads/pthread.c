@@ -28,29 +28,35 @@ double measureTime(struct timeval begin, struct timeval end) {
 }
 
 
-int main(){
+int main(int argc, char *argv[]){
 
-    FILE *fptr;
-    // fptr = fopen ("./../../graphs/belgium_osm/belgium_osm.mtx" , "r");
-    // fptr = fopen ("./../../graphs/mycielskian13/mycielskian13.mtx" , "r");
-    // fptr = fopen ("./../../graphs/com_youtube/com_youtube.mtx" , "r");
-    // fptr = fopen ("./../../graphs/test_matrices/small_graph_2.mtx" , "r");
-    fptr = fopen ("./../../graphs/s3dkq4m2.mtx" , "r");
-    
-    if (fptr == NULL){
-        printf("Error! opening file");
-        // Program exits if file pointer returns NULL.
+    if (argc != 4) {
+        printf("\n\n  Usage: ./sequential <path_to_graph> <number_of_clusters> <number_of_threads>\n\n");
         return 1;
     }
 
+    FILE *fptr;
+
+    printf("\n\n    PTHREADS\n\n");
+    printf("    Reading matrix %s ...\n", argv[1]);
+    fptr = fopen (argv[1] , "r");
+    
+    if (fptr == NULL){
+        printf("\n\n    Error! opening file\n\n");
+        // Program exits if file pointer returns NULL.
+        return 1;
+    }
+    
+    int nclusters = atoi(argv[2]);
+    int requestedThreads = atoi(argv[3]);
+
     struct timeval begin, end, totalBegin, totalEnd;
 
-    printf("Reading matrix... ");
     gettimeofday(&begin, NULL);
     gettimeofday(&totalBegin, NULL);
 
     int nrows, ncols , nz;
-    int nclusters = 1000;
+    
 
     int hasValues = readHeader(&nrows, &ncols, &nz, fptr);
 
@@ -71,10 +77,10 @@ int main(){
     // printCscMatrix(&cscMatrix);
 
     gettimeofday(&end, NULL);
-    printf("Time for matrix read: %.5f seconds.\n", measureTime(begin, end));
+    printf("    Time for matrix read: %.5f seconds.\n\n", measureTime(begin, end));
 
 
-    printf("Creating configuration matrix... ");
+    printf("    Creating configuration matrix...\n");
     gettimeofday(&begin, NULL);
 
     // Create the configuration matrix
@@ -94,9 +100,9 @@ int main(){
     // printCscMatrix(&cscConfigMatrix);
 
     gettimeofday(&end, NULL);
-    printf("Time for configuration matrix creation: %.5f seconds.\n", measureTime(begin, end));
+    printf("    Time for configuration matrix creation: %.5f seconds.\n\n", measureTime(begin, end));
 
-    printf("Transposing the configuration matrix ...");
+    printf("    Transposing the configuration matrix ...\n");
     gettimeofday(&begin, NULL);
 
 
@@ -107,16 +113,16 @@ int main(){
     // printCsrMatrix(&csrConfigTMatrix);
 
     gettimeofday(&end, NULL);
-    printf("Time for configuration matrix transpose: %.5f seconds.\n", measureTime(begin, end));
+    printf("    Time for configuration matrix transpose: %.5f seconds.\n\n", measureTime(begin, end));
 
 
-    printf("Multiplying Omega T and initial matrix ...\n");
+    printf("    Multiplying Omega T and initial matrix ...\n");
     gettimeofday(&begin, NULL);
 
     CSR configTProduct;
 
     // Multiply the transpose of the configuration matrix with the original matrix
-    csrCscMultiplication(&csrConfigTMatrix, &cscMatrix, &configTProduct);
+    csrCscMultiplication(&csrConfigTMatrix, &cscMatrix, &configTProduct, requestedThreads);
 
     // printCsrMatrix(&configTProduct);
     // printDenseCSRMatrix(&configTProduct);
@@ -124,16 +130,16 @@ int main(){
     CSR csrFinalProduct;
 
     // Multiply the configuration matrix with the result of the previous multiplication
-    printf("Multiplying Omega and the result of the previous multiplication ...\n");
+    printf("    Multiplying Omega and the result of the previous multiplication ...\n");
 
-    csrCscMultiplication(&configTProduct, &cscConfigMatrix, &csrFinalProduct); 
+    csrCscMultiplication(&configTProduct, &cscConfigMatrix, &csrFinalProduct, requestedThreads); 
     // printCsrMatrix(&csrFinalProduct);
-    // printDenseCSRMatrix(&csrFinalProduct);
+    printDenseCSRMatrix(&csrFinalProduct);
 
     gettimeofday(&end, NULL);
     gettimeofday(&totalEnd, NULL);
-    printf("Time for matrix multiplication: %.5f seconds.\n", measureTime(begin, end));
-    printf("\nTotal time: %.5f seconds.\n", measureTime(totalBegin, totalEnd));
+    printf("    Time for matrix multiplication: %.5f seconds.\n\n", measureTime(begin, end));
+    printf("    Total time: %.5f seconds.\n", measureTime(totalBegin, totalEnd));
 
     fclose(fptr); 
 
@@ -141,5 +147,5 @@ int main(){
     free(cscMatrix.rows);
     free(cscConfigMatrix.cols);
     free(cscConfigMatrix.rows);
-    free(csrConfigTMatrix.cols); 
+    free(csrConfigTMatrix.cols);
 }
