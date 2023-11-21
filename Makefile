@@ -34,7 +34,8 @@ CILK_FILES := $(CILK_FILES:%=$(CILK_BUILDDIR)/%.o)
 GRAPH = ./graphs/mycielskian13/mycielskian13.mtx
 N_THREADS = 16
 N_CLUSTERS = 4
-CILK_NWORKERS = 1
+CILK_NWORKERS = 16
+CILK_TASKS = 32
 
 
 CC_FLAGS = -O3 -g -Wall
@@ -122,7 +123,7 @@ build_cilk: $(CILK_DIR)/open_cilk.out
 run_cilk: $(CILK_DIR)/open_cilk.out
 	@ echo
 	@ echo "	Running open cilk version..."
-	@ CILK_NWORKERS=$(CILK_NWORKERS) $(CILK_BUILDDIR)/open_cilk.out $(GRAPH) $(N_CLUSTERS)
+	@ CILK_NWORKERS=$(CILK_NWORKERS) $(CILK_BUILDDIR)/open_cilk.out $(GRAPH) $(N_CLUSTERS) $(CILK_TASKS)
 	@ echo
 	@ echo
 
