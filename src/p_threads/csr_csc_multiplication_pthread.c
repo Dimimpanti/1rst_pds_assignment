@@ -6,12 +6,12 @@
 #define NUM_THREADS 128
 
 typedef struct ThreadArgs{
-    CSR *csrMatrix;
+    CSR *csrMatrix; 
     CSC *cscMatrix;
     int *outputCols;
     int *outputValues;
     int *outputRows;
-    int nz;
+    int nz; 
     int startRow; // the start row is included
     int endRow;   // the end row is included
     int threadId; 
@@ -30,9 +30,9 @@ typedef struct ThreadArgs{
  */
 int multiplyRowCol(int startRow , int endRow , int startCol , int endCol , int *row , int *col, int *csrValues, int *cscValues){
 
-    int sum = 0;
-    int row_index = startRow;
-    int col_index = startCol;
+    int sum = 0; // the sum of the multiplication of the common elements
+    int row_index = startRow;  //the index of the row we are looking at
+    int col_index = startCol; //the index of the column we are looking at
 
     // Compare the elements of the row and the column
     while(row_index <= endRow && col_index <= endCol){
@@ -70,21 +70,21 @@ void *csrCscMultiplicationRunnable(void *args){
     CSR *csrMatrix = threadArgs->csrMatrix;
     CSC *cscMatrix = threadArgs->cscMatrix;
 
-    int startRow = 0;
-    int endRow = 0;
+    int startRow = 0; // the starting index of the row of the CSR matrix
+    int endRow = 0; // the ending index of the row of the CSR matrix
 
-    int startCol = 0;
-    int endCol = 0;
+    int startCol = 0; // the starting index of the column of the CSC matrix
+    int endCol = 0; // the ending index of the column of the CSC matrix
 
-    int res = 0;
-    int resIndex = 0;
-    int rowIndex = 0;
-    int nnzInRow = 0;
+    int res = 0; // the result of the multiplication of the row with the column
+    int resIndex = 0; // the index of the output matrix
+    int rowIndex = 0; //the row index of the output matrix
+    int nnzInRow = 0; // the number of non-zero elements in the row of the output matrix
 
     threadArgs->outputRows[0] = 0;
     threadArgs->nz = 0;
 
-    // For every row of the CSR matrix
+    // For every row of the CSR matrix that the thread is responsible for 
     for(int row = threadArgs->startRow; row <= threadArgs->endRow; row++){
 
         // The starting index of the row of the CSR matrix
@@ -126,7 +126,7 @@ void *csrCscMultiplicationRunnable(void *args){
         // Store the number of non-zero elements in the row
         threadArgs->outputRows[rowIndex + 1] = threadArgs->outputRows[rowIndex] + nnzInRow;
         
-        rowIndex++;
+        rowIndex++; // Increment the row index of the output matrix in order to go to the next row
         
         // Set the number of non-zero elements in the output matrix
         threadArgs->nz += nnzInRow;
@@ -156,8 +156,8 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
         output->nz = cscMatrix->nz;
     }
 
-    output->nrows = csrMatrix->nrows;
-    output->ncols = cscMatrix->ncols;
+    output->nrows = csrMatrix->nrows; // the number of rows of the output matrix is the same as the number of rows of the CSR matrix
+    output->ncols = cscMatrix->ncols; // the number of columns of the output matrix is the same as the number of columns of the CSC matrix
     output->cols = (int *)malloc(output->nz * sizeof(int));           //TODO : free
     output->rows = (int *)malloc((output->nrows + 1) * sizeof(int));  //TODO : free
     output->values = (int *)malloc(output->nz * sizeof(int));         //TODO : free
@@ -175,9 +175,9 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
         numThreads = csrMatrix->nrows;
     }
 
-    int rowsPerThread = csrMatrix->nrows / numThreads;
+    int rowsPerThread = csrMatrix->nrows / numThreads; // the number of rows that each thread will be responsible for
 
-    int rowsRemaining = csrMatrix->nrows % numThreads;
+    int rowsRemaining = csrMatrix->nrows % numThreads; // the remaining rows that have to be assigned to the threads
 
     int *rowsPerThreadArray = (int *)malloc(numThreads * sizeof(int));  //TODO : free done
     
@@ -196,7 +196,7 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
     // Create the arguments for the threads
     ThreadArgs *threadArgs = (ThreadArgs *)malloc(numThreads * sizeof(ThreadArgs));  //TODO : free done
 
-    int maxNonZeroElements = 0;
+    int maxNonZeroElements = 0; //the dimension of the outputCols and outputValues arrays
 
     for (int threadId = 0; threadId < numThreads; threadId++){
 
@@ -206,7 +206,7 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
         threadArgs[threadId].threadId = threadId;
 
         if(threadId == 0 ){
-            threadArgs[threadId].startRow = 0;
+            threadArgs[threadId].startRow = 0; 
         }
         else {
             threadArgs[threadId].startRow = threadArgs[threadId - 1].endRow + 1;
@@ -235,8 +235,8 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
     }
     
     int lastElement = 0;
-    int rowsIndex = 0;
-    int colIndex = 0;
+    int rowsIndex = 0; //the index of the output rows array
+    int colIndex = 0; //the index of the output cols and values arrays
 
     // Merge the results of the threads
     for(int threadId = 0; threadId < numThreads; threadId++){
@@ -293,11 +293,11 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output){
  */
 void printDenseCSRMatrix(CSR *csrMatrix){
 
-    int startCol = 0;
-    int endCol = 0;
+    int startCol = 0; // the starting index of the column of the CSR matrix
+    int endCol = 0; // the ending index of the column of the CSR matrix
 
-    int rowIndex = 0;
-    int colIndex = 0;
+    int rowIndex = 0; // the index of the row we are looking at at the CSR matrix
+    int colIndex = 0; // the index of the column we are looking at at the CSR matrix
 
     // For every row of the CSR matrix
     for(int row = 0; row < csrMatrix->nrows; row++){

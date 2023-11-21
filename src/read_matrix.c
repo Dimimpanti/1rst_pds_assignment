@@ -225,7 +225,7 @@ void createGraph(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGrap
     for(int i = 0 ;i < nz / 2; i++){
         fscanf(initialFile, "%d %d ", &read_row, &read_col);
 
-        //convert to 0indexed
+        //convert to 0indexed 
         read_row--;
         read_col--;
 
@@ -256,7 +256,7 @@ void creatGraphCol(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGr
         
     skipHeader(initialFile);
 
-    int read_row, read_col;
+    int read_row, read_col; 
 
     //arrays of the columns of the two graphs 
     int *lowerColumnIndex = (int *)calloc(nrows, sizeof(int));
@@ -366,6 +366,14 @@ void creatGraphCol(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGr
 }
 
 
+
+/**
+ * @brief Create a Csc Matrix matrix from a file  
+ * 
+ * @param cscMatrix 
+ * @param initialFile 
+ * @param matrixHasValues 
+ */
 void createCscMatrix(CSC *cscMatrix, FILE  *initialFile, int matrixHasValues){      
    
    //arrays that stores the non zero elements of each row of the graph
@@ -373,16 +381,17 @@ void createCscMatrix(CSC *cscMatrix, FILE  *initialFile, int matrixHasValues){
     int *elemPerColUp = (int *)calloc(cscMatrix->ncols, sizeof(int));    // TODO: free done
     
     
-    countElemPerCol(initialFile, elemPerColDown, elemPerColUp, cscMatrix->nz, matrixHasValues);  //Creating the elemPerRowDown,elemPerRowUp matrices
+    countElemPerCol(initialFile, elemPerColDown, elemPerColUp, cscMatrix->nz, matrixHasValues);  //Creating the elemPerRowDown,elemPerRowUp arrays that stores the non-zero elements of the Lower and Upper matrices per row
     
+    // creating the graphs of the lower and upper matrices
     ElementsOfGraph **LowerGraph = allocateGraph(cscMatrix->ncols, elemPerColDown);
     ElementsOfGraph **UpperGraph = allocateGraph(cscMatrix->ncols, elemPerColUp);
 
     creatGraphCol(initialFile, LowerGraph, UpperGraph, cscMatrix->nz, cscMatrix->ncols, matrixHasValues); 
 
     //int row_index = 0;
-    int col_index = 0;
-    cscMatrix->cols[0] = 0;
+    int col_index = 0; // the index of the column we are looking at
+    cscMatrix->cols[0] = 0; //first element of the cols vector at csc matrices is always 0
 
     //finding the row and col vectors that describe the Csr Matrix
     for(int col = 0 ; col < cscMatrix->ncols; col++){
@@ -405,8 +414,8 @@ void createCscMatrix(CSC *cscMatrix, FILE  *initialFile, int matrixHasValues){
             col_index++;
         }
 
-        cscMatrix->cols[col + 1] = elemPerColDown[col] + elemPerColUp[col];
-        cscMatrix->cols[col + 1] += cscMatrix->cols[col];
+        cscMatrix->cols[col + 1] = elemPerColDown[col] + elemPerColUp[col]; // the next element of the cols vector is the sum of the non-zero elements of the current column both from the upper and the lower matrix
+        cscMatrix->cols[col + 1] += cscMatrix->cols[col]; 
     }
     
     for(int i = 0; i < cscMatrix->ncols; i++){
@@ -478,7 +487,7 @@ void printCscMatrix(CSC *cscMatrix) {
  * @brief Prints the Graph
  * 
  * @param nrows number of rows of the mtx fil
- * @param graph 
+ * @param graph the graph we want to print
  * @param elemPerRow number of non zero elements of each row of the graph
  */
 void printGraph(int nrows, int **graph, int *elemPerRow) {
