@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#include "../read_matrix.h"
-#include "configuration_matrix_pthread.h"
 #include "csr_csc_multiplication_pthread.h"
+#include "../read_matrix.h"
+#include "../configuration_matrix.h"
 #include "../structs.h"
 
 
@@ -31,7 +31,7 @@ double measureTime(struct timeval begin, struct timeval end) {
 int main(int argc, char *argv[]){
 
     if (argc != 4) {
-        printf("\n\n  Usage: ./sequential <path_to_graph> <number_of_clusters> <number_of_threads>\n\n");
+        printf("\n\n  Usage: ./sequential <path_to_graph> <path_to_cluster_file> <number_of_threads>\n\n");
         return 1;
     }
 
@@ -42,12 +42,11 @@ int main(int argc, char *argv[]){
     fptr = fopen (argv[1] , "r");
     
     if (fptr == NULL){
-        printf("\n\n    Error! opening file\n\n");
+        printf("\n\n    Error! opening matrix file\n\n");
         // Program exits if file pointer returns NULL.
         return 1;
     }
     
-    int nclusters = atoi(argv[2]);
     int requestedThreads = atoi(argv[3]);
 
     struct timeval begin, end, totalBegin, totalEnd;
@@ -86,17 +85,16 @@ int main(int argc, char *argv[]){
     // Create the configuration matrix
     CSC cscConfigMatrix;
     
-    cscConfigMatrix.ncols= nclusters;  // The columns of the matrix are the number of clusters
-    cscConfigMatrix.nrows = nrows;     // The rows of the matrix are the number of vertices
-    cscConfigMatrix.nz = nrows;        // The number of non-zero elements is equal to the number of vertices
+    FILE *clusterFile;
+    clusterFile = fopen(argv[2], "r");
 
-    // Allocate memory for the arrays of the configuration matrix
-    cscConfigMatrix.cols = (int *)malloc((cscConfigMatrix.ncols + 1) * sizeof(int));  //TODO : free done
-    cscConfigMatrix.rows = (int *)malloc(cscConfigMatrix.nz * sizeof(int));           //TODO : free done
-    cscConfigMatrix.values = (int *)malloc(cscConfigMatrix.nz * sizeof(int));         //TODO : free done
-   
+    if (clusterFile == NULL){
+        printf("\n\n    Error! opening cluster file\n\n");
+        // Program exits if file pointer returns NULL.
+        return 1;
+    }
 
-    configurationMatrix(nclusters, &cscConfigMatrix);
+    configurationMatrix(clusterFile, &cscConfigMatrix, cscMatrix.ncols);
     // printCscMatrix(&cscConfigMatrix);
 
     gettimeofday(&end, NULL);
@@ -133,15 +131,17 @@ int main(int argc, char *argv[]){
     printf("    Multiplying Omega and the result of the previous multiplication ...\n");
 
     csrCscMultiplication(&configTProduct, &cscConfigMatrix, &csrFinalProduct, requestedThreads); 
-    // printCsrMatrix(&csrFinalProduct);
-    printDenseCSRMatrix(&csrFinalProduct);
 
     gettimeofday(&end, NULL);
     gettimeofday(&totalEnd, NULL);
     printf("    Time for matrix multiplication: %.5f seconds.\n\n", measureTime(begin, end));
     printf("    Total time: %.5f seconds.\n", measureTime(totalBegin, totalEnd));
 
+    // printCsrMatrix(&csrFinalProduct);
+    // printDenseCSRMatrix(&csrFinalProduct);
+
     fclose(fptr); 
+    fclose(clusterFile);
 
     free(cscMatrix.cols);
     free(cscMatrix.rows);

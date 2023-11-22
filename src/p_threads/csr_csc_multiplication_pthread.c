@@ -176,9 +176,6 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output, int req
     printf("            Number of rows: %d\n", cscMatrix->nrows);
     printf("            Number of columns: %d\n", cscMatrix->ncols);
     printf("            Number of non-zero elements: %d\n", cscMatrix->nz);
-    printf("        Output Matrix:\n");
-    printf("            Number of rows: %d\n", output->nrows);
-    printf("            Number of columns: %d\n\n", output->ncols);
 
     // Initialize the thread attributes
     pthread_attr_t pthreadCustomAttr;
@@ -191,10 +188,7 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output, int req
         numThreads = csrMatrix->nrows;
     }
 
-    printf("        Processing with %d threads...\n", numThreads);
-
-
-    printf("        Processing with %d threads...\n", numThreads);
+    printf("        Processing with %d threads...\n\n", numThreads);
 
     int rowsPerThread = csrMatrix->nrows / numThreads; // the number of rows that each thread will be responsible for
 
@@ -255,8 +249,6 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output, int req
     for (int threadId = 0; threadId < numThreads; threadId++){
         pthread_join(threads[threadId], NULL);
     }
-
-    printf("\n\n");
     
     int lastElement = 0;
     int rowsIndex = 0; //the index of the output rows array
@@ -291,6 +283,13 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output, int req
 
         output->nz += threadArgs[threadId].nz;
     }
+
+    printf("        Output Matrix:\n");
+    printf("            Number of rows: %d\n", output->nrows);
+    printf("            Number of columns: %d\n", output->ncols);
+    printf("            Number of non-zero elements: %d\n", output->nz);
+    printf("\n\n");
+
 
     free(threads);
     free(rowsPerThreadArray);

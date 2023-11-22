@@ -173,9 +173,6 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output, int req
     printf("            Number of rows: %d\n", cscMatrix->nrows);
     printf("            Number of columns: %d\n", cscMatrix->ncols);
     printf("            Number of non-zero elements: %d\n", cscMatrix->nz);
-    printf("        Output Matrix:\n");
-    printf("            Number of rows: %d\n", output->nrows);
-    printf("            Number of columns: %d\n\n", output->ncols);
 
 
     // decide the number of tasks to create
@@ -187,8 +184,6 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output, int req
 
     printf("        Processing %d tasks...\n", numTasks);
 
-
-    printf("        Processing %d tasks...\n", numTasks);
 
     int rowsPerThread = csrMatrix->nrows / numTasks; // the number of rows that each thread will be responsible for
 
@@ -244,7 +239,6 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output, int req
     // Wait for the workers to finish
     cilk_sync;
 
-    printf("\n\n");
     
     int lastElement = 0;
     int rowsIndex = 0; //the index of the output rows array
@@ -279,6 +273,12 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output, int req
 
         output->nz += threadArgs[threadId].nz;
     }
+
+    printf("        Output Matrix:\n");
+    printf("            Number of rows: %d\n", output->nrows);
+    printf("            Number of columns: %d\n", output->ncols);
+    printf("            Number of non-zero elements: %d\n", output->nz);
+    printf("\n\n");
 
     free(rowsPerThreadArray);
 

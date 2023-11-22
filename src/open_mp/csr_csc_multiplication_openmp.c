@@ -82,9 +82,6 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output, int num
     printf("            Number of rows: %d\n", cscMatrix->nrows);
     printf("            Number of columns: %d\n", cscMatrix->ncols);
     printf("            Number of non-zero elements: %d\n", cscMatrix->nz);
-    printf("        Output Matrix:\n");
-    printf("            Number of rows: %d\n", output->nrows);
-    printf("            Number of columns: %d\n\n", output->ncols);
     printf("        Processing...\n");
 
     int startRow = 0;
@@ -156,6 +153,10 @@ void csrCscMultiplication(CSR *csrMatrix , CSC *cscMatrix , CSR *output, int num
     // Set the number of non-zero elements in the output matrix
     output->nz = nonZeroElements;
 
+    printf("        Output Matrix:\n");
+    printf("            Number of rows: %d\n", output->nrows);
+    printf("            Number of columns: %d\n\n", output->ncols);
+    printf("            Number of non-zero elements: %d\n", output->nz);
     printf("\n\n");
 }
 

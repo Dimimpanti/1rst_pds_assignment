@@ -31,43 +31,42 @@ The following arguments are available for the code for each target:
 ##### Sequential
 
 - `GRAPH` : The relative path of the graph file. Default value: none.
-- `N_CLUSTERS` : The number of clusters to divide the nodes. Default value: 4.
-
+- `CLUSTER` : The relative path of the cluster file. Default value: none.
 Example: 
 ```
-make run_sequential GRAPH=./path/to/graph/file.mtx N_CLUSTERS=8
+make run_sequential GRAPH=./path/to/graph/file.mtx CLUSTER=./path/to/cluster/file.txt
 ```
 
 ##### Pthread
 
 - `GRAPH` : The relative path of the graph file. Default value: none.
-- `N_THREADS` : The number of threads to use. Default value: 8.
-- `N_CLUSTERS` : The number of clusters to divide the nodes. Default value: 4.
+- `N_THREADS` : The number of threads to use. Default value: 16.
+- `CLUSTER` : The relative path of the cluster file. Default value: none.
 
 Example: 
 ```
-make run_pthread GRAPH=./path/to/graph/file.mtx N_THREADS=8 N_CLUSTERS=8
+make run_pthread GRAPH=./path/to/graph/file.mtx N_THREADS=8 CLUSTER=./path/to/cluster/file.txt
 ```
 
 ##### Cilk
 
 - `GRAPH` : The relative path of the graph file. Default value: none.
 - `CILK_WORKERS` : The number of workers to use. Default value: 8.
-- `N_CLUSTERS` : The number of clusters to divide the nodes. Default value: 4.
+- `CLUSTER` : The relative path of the cluster file. Default value: none.
 - `CILK_TASKS` : The number of tasks to divide the work. Default value: 32. `IMPORTANT!` This argument denote the requested number of tasks, not the actual number of tasks that will be created. The actual number of tasks will be the closest possible to the requested number.
 
 Example: 
 ```
-make run_cilk GRAPH=./path/to/graph/file.mtx CILK_WORKERS=8 N_CLUSTERS=8 CILK_TASKS=32
+make run_cilk GRAPH=./path/to/graph/file.mtx CILK_WORKERS=8 CLUSTER=./path/to/cluster/file.txt CILK_TASKS=32
 ```
 
 ##### OpenMP
 
 - `GRAPH` : The relative path of the graph file. Default value: none.
 - `N_THREADS` : The number of threads to use. Default value: 8.
-- `N_CLUSTERS` : The number of clusters to divide the nodes. Default value: 4.
+- `CLUSTER` : The relative path of the cluster file. Default value: none.
 
 Example: 
 ```
-make run_openmp GRAPH=./path/to/graph/file.mtx N_THREADS=8 N_CLUSTERS=8
+make run_openmp GRAPH=./path/to/graph/file.mtx N_THREADS=8 CLUSTER=./path/to/cluster/file.txt
 ```

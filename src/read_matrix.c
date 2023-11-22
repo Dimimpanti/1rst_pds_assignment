@@ -118,7 +118,7 @@ void countElemPerRow(FILE *initialFile, int *elemPerRowDown, int *elemPerRowUp, 
     char temp_buffer[500];
 
     //reading the pairs of rows and cols and rows++ and cols++
-    for(int i = 0; i < nz; i++){
+    for(int i = 0; i < nz / 2; i++){
         
         fscanf(initialFile, "%d %d ", &row, &col);
 
@@ -317,29 +317,29 @@ void creatGraphCol(FILE *initialFile, ElementsOfGraph **LowerGraph, ElementsOfGr
     createGraph(initialFile, LowerGraph, UpperGraph, csrMatrix->nz, csrMatrix->nrows, matrixHasValues); 
 
     //int row_index = 0;
-    int col_index = 0;
+    int colIndex = 0;
     csrMatrix->rows[0] = 0;
 
     //finding the row and col vectors that describe the Csr Matrix
-    for(int row = 0 ; row < csrMatrix->nrows; row++){
+    for(int row = 0; row < csrMatrix->nrows; row++){
         for(int col = 0; col < elemPerRowDown[row]; col++){
             // insert the column index of the non-zero element
-            csrMatrix->cols[col_index] = LowerGraph[row][col].col;
+            csrMatrix->cols[colIndex] = LowerGraph[row][col].col;
 
             // the value of the non-zero element is 1
-            csrMatrix->values[col_index] = 1;
+            csrMatrix->values[colIndex] = 1;
 
-            col_index++;
+            colIndex++;
         }
 
         for (int col = 0; col < elemPerRowUp[row]; col++) {
             // insert the column index of the non-zero element
-            csrMatrix->cols[col_index] = UpperGraph[row][col].col;
+            csrMatrix->cols[colIndex] = UpperGraph[row][col].col;
 
             // the value of the non-zero element is 1
-            csrMatrix->values[col_index] = 1;
+            csrMatrix->values[colIndex] = 1;
 
-            col_index++;
+            colIndex++;
         }
 
         csrMatrix->rows[row + 1] = elemPerRowDown[row] + elemPerRowUp[row];
@@ -390,28 +390,28 @@ void createCscMatrix(CSC *cscMatrix, FILE  *initialFile, int matrixHasValues){
     creatGraphCol(initialFile, LowerGraph, UpperGraph, cscMatrix->nz, cscMatrix->ncols, matrixHasValues); 
 
     //int row_index = 0;
-    int col_index = 0; // the index of the column we are looking at
+    int rowIndex = 0; // the index of the column we are looking at
     cscMatrix->cols[0] = 0; //first element of the cols vector at csc matrices is always 0
 
     //finding the row and col vectors that describe the Csr Matrix
-    for(int col = 0 ; col < cscMatrix->ncols; col++){
+    for(int col = 0; col < cscMatrix->ncols; col++){
         for (int row = 0; row < elemPerColUp[col]; row++) {
             // insert the row index of the non-zero element
-            cscMatrix->rows[col_index] = UpperGraph[col][row].row;
+            cscMatrix->rows[rowIndex] = UpperGraph[col][row].row;
 
             // the value of the non-zero element is 1
-            cscMatrix->values[col_index] = 1;
-            col_index++;
+            cscMatrix->values[rowIndex] = 1;
+            rowIndex++;
         }
 
         for(int row = 0; row < elemPerColDown[col]; row++){
             // insert the row index of the non-zero element
-            cscMatrix->rows[col_index] = LowerGraph[col][row].row;
+            cscMatrix->rows[rowIndex] = LowerGraph[col][row].row;
 
             // the value of the non-zero element is 1
-            cscMatrix->values[col_index] = 1;
+            cscMatrix->values[rowIndex] = 1;
 
-            col_index++;
+            rowIndex++;
         }
 
         cscMatrix->cols[col + 1] = elemPerColDown[col] + elemPerColUp[col]; // the next element of the cols vector is the sum of the non-zero elements of the current column both from the upper and the lower matrix
@@ -433,7 +433,6 @@ void createCscMatrix(CSC *cscMatrix, FILE  *initialFile, int matrixHasValues){
 
     free(elemPerColDown);
     free(elemPerColUp);
-
 }
 
 

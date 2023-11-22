@@ -3,7 +3,7 @@
 #include <sys/time.h>
 
 #include "../read_matrix.h"
-#include "configuration_matrix.h"
+#include "../configuration_matrix.h"
 #include "csr_csc_multiplication.h"
 #include "../structs.h"
 
@@ -31,7 +31,7 @@ double measureTime(struct timeval begin, struct timeval end) {
 int main(int argc, char *argv[]){
 
     if (argc != 3) {
-        printf("\n\n    Usage: ./sequential <path_to_graph> <number_of_clusters>\n\n");
+        printf("\n\n    Usage: ./sequential <path_to_graph> <path_to_cluster_file>\n\n");
         return 1;
     }
 
@@ -42,12 +42,10 @@ int main(int argc, char *argv[]){
     fptr = fopen (argv[1] , "r");
     
     if (fptr == NULL){
-        printf("\n\n    Error! opening file\n\n");
+        printf("\n\n    Error! opening matrix file\n\n");
         // Program exits if file pointer returns NULL.
         return 1;
     }
-    
-    int nclusters = atoi(argv[2]);
 
     struct timeval begin, end, totalBegin, totalEnd;
 
@@ -83,19 +81,19 @@ int main(int argc, char *argv[]){
     gettimeofday(&begin, NULL);
 
     // Create the configuration matrix
-    CSC cscConfigMatrix;
-    
-    cscConfigMatrix.ncols= nclusters;  // The columns of the matrix are the number of clusters
-    cscConfigMatrix.nrows = nrows;     // The rows of the matrix are the number of vertices
-    cscConfigMatrix.nz = nrows;        // The number of non-zero elements is equal to the number of vertices
+    CSC cscConfigMatrix; 
 
-    // Allocate memory for the arrays of the configuration matrix
-    cscConfigMatrix.cols = (int *)malloc((cscConfigMatrix.ncols + 1) * sizeof(int));  //TODO : free done
-    cscConfigMatrix.rows = (int *)malloc(cscConfigMatrix.nz * sizeof(int));           //TODO : free done
-    cscConfigMatrix.values = (int *)malloc(cscConfigMatrix.nz * sizeof(int));         //TODO : free done
-   
+    FILE *fptrConfig;
 
-    configurationMatrix(nclusters, &cscConfigMatrix);
+    fptrConfig = fopen (argv[2] , "r");
+
+    if (fptrConfig == NULL){
+        printf("\n\n    Error! opening cluster file\n\n");
+        // Program exits if file pointer returns NULL.
+        return 1;
+    }
+
+    configurationMatrix(fptrConfig, &cscConfigMatrix, cscMatrix.ncols);
     // printCscMatrix(&cscConfigMatrix);
 
     gettimeofday(&end, NULL);
@@ -132,15 +130,17 @@ int main(int argc, char *argv[]){
     printf("    Multiplying Omega and the result of the previous multiplication ...\n\n");
 
     csrCscMultiplication(&configTProduct, &cscConfigMatrix, &csrFinalProduct); 
-    // printCsrMatrix(&csrFinalProduct);
-    printDenseCSRMatrix(&csrFinalProduct);
-
+    
     gettimeofday(&end, NULL);
     gettimeofday(&totalEnd, NULL);
     printf("    Time for matrix multiplication: %.5f seconds.\n\n", measureTime(begin, end));
     printf("    Total time: %.5f seconds.\n", measureTime(totalBegin, totalEnd));
 
-    fclose(fptr); 
+    // printCsrMatrix(&csrFinalProduct);
+    // printDenseCSRMatrix(&csrFinalProduct);
+
+    fclose(fptr);
+    fclose(fptrConfig);
 
     free(cscMatrix.cols);
     free(cscMatrix.rows);
